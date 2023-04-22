@@ -1,32 +1,22 @@
+package server;
+
 import java.io.*;
 import java.net.*;
-import java.util.Date;
 
 public class Server {
 
     public static void main(String[] args) {
-        if (args.length < 1) return;
+        Store store = Store.getStore();
 
-        int port = Integer.parseInt(args[0]);
+        try (ServerSocket serverSocket = new ServerSocket(store.getPort())) {
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-
-            System.out.println("Server is listening on port " + port);
+            System.out.println("Server is listening on port " + store.getPort());
 
             while (true) {
                 Socket socket = serverSocket.accept();
 
-                InputStream input = socket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-
-                String time = reader.readLine();
-
-                System.out.println("New client connected: "+ time);
-
-                OutputStream output = socket.getOutputStream();
-                PrintWriter writer = new PrintWriter(output, true);
-
-                writer.println(new Date().toString());
+                Auth auth = new Auth(socket);
+                store.execute(auth);
             }
 
         } catch (IOException ex) {

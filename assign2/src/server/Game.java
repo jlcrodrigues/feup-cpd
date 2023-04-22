@@ -1,3 +1,5 @@
+package server;
+
 public interface Game {
 
     void play();

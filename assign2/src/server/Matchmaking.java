@@ -1,5 +1,7 @@
+package server;
+
 public class Matchmaking {
-    public addPlayer(Player player) {
+    public void addPlayer(Player player) {
         //TODO
     }
 }
