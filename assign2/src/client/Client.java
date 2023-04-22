@@ -10,18 +10,17 @@ public class Client {
         int port = Integer.parseInt(args[1]);
 
         try (Socket socket = new Socket(hostname, port)) {
-
+            /*
             OutputStream output = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(output, true);
             writer.println("new Date()?".toString());
+             */
 
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 
-            String time = reader.readLine();
-
-            System.out.println(time);
-
+            System.out.println(reader.readLine());
+            System.out.println(reader.readLine());
 
         } catch (UnknownHostException ex) {
 

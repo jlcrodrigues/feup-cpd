@@ -15,8 +15,8 @@ public class Server {
             while (true) {
                 Socket socket = serverSocket.accept();
 
-                Auth auth = new Auth(socket);
-                store.execute(auth);
+                ConnectionHandler handler = new ConnectionHandler(socket);
+                store.execute(handler);
             }
 
         } catch (IOException ex) {

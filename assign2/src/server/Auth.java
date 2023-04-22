@@ -1,10 +1,10 @@
 package server;
 
-import java.io.*;
-import java.net.Socket;
-import java.util.Date;
+import server.game.Player;
 
-public class Auth implements Runnable {
+import java.net.Socket;
+
+public class Auth extends ConnectionHandler {
     private Socket socket;
 
     public Auth(Socket socket) {
@@ -13,22 +13,8 @@ public class Auth implements Runnable {
 
     @Override
     public void run() {
-        InputStream input = null;
-        try {
-            input = socket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-
-            String time = reader.readLine();
-
-            System.out.println("New client connected: "+ time);
-
-            OutputStream output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-
-            writer.println(new Date().toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        writeSocket(socket, "Waiting in queue!");
+        Matchmaking.getMatchmaking().addPlayer(new Player(socket));
     }
 
     public static void login() {
