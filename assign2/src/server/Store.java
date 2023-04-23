@@ -12,7 +12,7 @@ class Store {
     private int port;
 
     private Store() {
-        port = 8081;
+        port = 8080;
         int numThreads = Runtime.getRuntime().availableProcessors(); // use one thread per CPU core
         threadPool = Executors.newFixedThreadPool(numThreads);
         socketPool = new SocketPool("localhost", port);

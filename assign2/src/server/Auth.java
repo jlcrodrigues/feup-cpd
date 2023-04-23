@@ -3,6 +3,7 @@ package server;
 import server.game.Player;
 
 import java.net.Socket;
+import java.util.Map;
 
 public class Auth extends ConnectionHandler {
     private Socket socket;
@@ -13,25 +14,30 @@ public class Auth extends ConnectionHandler {
 
     @Override
     public void run() {
+        String method = readSocketLine(socket).toLowerCase();
+        switch (method) {
+            case "login":
+                login();
+                break;
+            case "register":
+                register();
+                break;
+            default:
+                writeSocket(socket, "1\nInvalid command");
+        }
+    }
+
+    public void login() {
+        String argsString = readSocketLine(socket);
+        Map<String, Object> args = jsonStringToMap(argsString);
+        System.out.println("New login: " + args.get("username"));
+
         writeSocket(socket, "Waiting in queue!");
         Matchmaking.getMatchmaking().addPlayer(new Player(socket));
     }
 
-    public static void login() {
-
-    }
-
-    public static void register() {
-
-    }
-
-    public static void logout() {
-
-    }
-
-    // get player from storage
-    public static void getPlayer() {
-
+    public void register() {
+        //TODO
     }
 
 }

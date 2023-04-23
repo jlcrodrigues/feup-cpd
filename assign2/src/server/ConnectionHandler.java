@@ -2,6 +2,8 @@ package server;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConnectionHandler implements Runnable {
     private Socket socket;
@@ -18,10 +20,18 @@ public class ConnectionHandler implements Runnable {
     public void run() {
         System.out.println("New connection: " + socket.getInetAddress().getHostAddress());
         Store store = Store.getStore();
-        store.execute(new Auth(socket));
+
+        String line = readSocketLine(socket).toLowerCase();
+        switch (line) {
+            case "auth":
+                store.execute(new Auth(socket));
+                break;
+            default:
+                writeSocket(socket, "1\nInvalid command");
+        }
     }
 
-    public String readSocketLine(Socket socket) {
+    protected String readSocketLine(Socket socket) {
         InputStream input = null;
         try {
             input = socket.getInputStream();
@@ -33,7 +43,7 @@ public class ConnectionHandler implements Runnable {
         }
     }
 
-    public void writeSocket(Socket socket, String message) {
+    protected void writeSocket(Socket socket, String message) {
         try {
             OutputStream output = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(output, true);
@@ -42,6 +52,42 @@ public class ConnectionHandler implements Runnable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected static Map<String, Object> jsonStringToMap(String jsonString) {
+        Map<String, Object> map = new HashMap<>();
+
+        // Remove the outer curly braces from the JSON string
+        jsonString = jsonString.substring(1, jsonString.length() - 1);
+
+        // Split the remaining string into key-value pairs
+        String[] keyValuePairs = jsonString.split(",");
+
+        // Iterate over each key-value pair and add it to the map
+        for (String pair : keyValuePairs) {
+            // Split each key-value pair into key and value
+            String[] keyValue = pair.split(":");
+            String key = keyValue[0].replaceAll("\"", "").trim();
+            String valueString = keyValue[1].replaceAll("\"", "").trim();
+            Object value;
+
+            // Try to parse the value as an integer or a double
+            try {
+                value = Integer.parseInt(valueString);
+            } catch (NumberFormatException e) {
+                try {
+                    value = Double.parseDouble(valueString);
+                } catch (NumberFormatException ex) {
+                    // If the value is not a number, use it as a string
+                    value = valueString;
+                }
+            }
+
+            // Add the key-value pair to the map
+            map.put(key, value);
+        }
+
+        return map;
     }
 
 }
