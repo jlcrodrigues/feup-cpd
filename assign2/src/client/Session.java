@@ -3,6 +3,7 @@ package client;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 public class Session {
     private static Session instance;
     private Socket socket;
+    private String token;
 
     private Session() {
         Properties properties = new Properties();
@@ -42,6 +44,14 @@ public class Session {
         this.socket = socket;
     }
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public void writeMessage(String module, String method, Map<String, Object> args) {
         try {
             OutputStream output = socket.getOutputStream();
@@ -50,6 +60,16 @@ public class Session {
             writer.println(module);
             writer.println(method);
             writer.println(mapToJsonString(args));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String[] readResponse() {
+        try {
+            InputStream input = socket.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+            return reader.readLine().split(" ", 2);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

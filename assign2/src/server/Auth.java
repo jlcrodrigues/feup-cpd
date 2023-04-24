@@ -2,15 +2,18 @@ package server;
 
 import server.game.Player;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 
 public class Auth extends ConnectionHandler {
     private Socket socket;
+    private final String fileName = "src/server/users.txt";
 
     public Auth(Socket socket) {
         this.socket = socket;
@@ -50,19 +53,50 @@ public class Auth extends ConnectionHandler {
     }
 
     public void register() {
-        //TODO
+        String argsString = readSocketLine(socket);
+        Map<String, Object> args = jsonStringToMap(argsString);
+
+        try {
+            FileWriter fileWriter = new FileWriter(fileName, true);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedHash = digest.digest(
+                    ((String) args.get("password")).getBytes(StandardCharsets.UTF_8));
+
+            bufferedWriter.newLine();
+            bufferedWriter.write(args.get("username") + "," + bytesToHex(encodedHash));
+
+            bufferedWriter.close();
+            fileWriter.close();
+        } catch (IOException e) {
+            writeSocket(socket, "1 An error occurred");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        writeSocket(socket, "0 ");
+        System.out.println("New register: " + args.get("username"));
     }
 
-    private boolean checkUser(String username, String password) {
+    private boolean checkUser(String username, String password)  {
+        System.out.println("checkUser(" + username + ", " + password + ")");
         String userPassword = getUserPassword(username);
         if (userPassword == null) {
             return false;
         }
-        return userPassword.equals(password);
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            return false;
+        }
+        byte[] encodedHash = digest.digest(
+                password.getBytes(StandardCharsets.UTF_8));
+        return userPassword.equals(bytesToHex(encodedHash));
     }
 
     private String getUserPassword(String username) {
-        String fileName = "src/server/users.txt";
         File file = new File(fileName);
 
         try {
@@ -82,5 +116,17 @@ public class Auth extends ConnectionHandler {
             System.out.println("File not found: " + fileName);
         }
         return null;
+    }
+
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder(2 * hash.length);
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
+            if(hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 }
