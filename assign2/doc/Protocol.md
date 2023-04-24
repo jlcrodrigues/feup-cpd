@@ -21,7 +21,7 @@ Server will yield a status code and an optional message:
 
 | Code | Description | Message       |
 |------|-------------|---------------|
-| 0    | OK          |               |
+| 0    | OK          | Optional      |
 | 1    | Error       | Error message |
 
 

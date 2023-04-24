@@ -27,7 +27,7 @@ public class ConnectionHandler implements Runnable {
                 store.execute(new Auth(socket));
                 break;
             default:
-                writeSocket(socket, "1\nInvalid command");
+                writeSocket(socket, "1 Invalid command");
         }
     }
 
