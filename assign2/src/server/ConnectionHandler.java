@@ -6,53 +6,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConnectionHandler implements Runnable {
-    private Socket socket;
+    protected SocketWrapper socket;
+    protected BufferedReader reader;
 
     public ConnectionHandler() {
         socket = null;
     }
 
-    public ConnectionHandler(Socket socket) {
+    public ConnectionHandler(SocketWrapper socket) {
         this.socket = socket;
     }
 
     @Override
     public void run() {
-        System.out.println("New connection: " + socket.getInetAddress().getHostAddress());
+        System.out.println("New connection: " + socket.getSocket().getInetAddress().getHostAddress());
         Store store = Store.getStore();
 
-        String line = readSocketLine(socket).toLowerCase();
+        String line = socket.readLine().toLowerCase();
         switch (line) {
             case "auth":
                 store.execute(new Auth(socket));
                 break;
             default:
-                writeSocket(socket, "1 Invalid command");
+                socket.writeLine("1 Invalid command");
         }
     }
 
-    protected String readSocketLine(Socket socket) {
-        InputStream input = null;
-        try {
-            input = socket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 
-            return reader.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void writeSocket(Socket socket, String message) {
-        try {
-            OutputStream output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-
-            writer.println(message);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     protected static Map<String, Object> jsonStringToMap(String jsonString) {
         Map<String, Object> map = new HashMap<>();

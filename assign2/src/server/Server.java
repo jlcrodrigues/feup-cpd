@@ -15,7 +15,7 @@ public class Server {
             while (true) {
                 Socket socket = serverSocket.accept();
 
-                ConnectionHandler handler = new ConnectionHandler(socket);
+                ConnectionHandler handler = new ConnectionHandler(new SocketWrapper(socket));
                 store.execute(handler);
             }
 

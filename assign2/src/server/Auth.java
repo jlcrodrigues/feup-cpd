@@ -12,16 +12,15 @@ import java.util.Scanner;
 import java.util.UUID;
 
 public class Auth extends ConnectionHandler {
-    private Socket socket;
     private final String fileName = "src/server/users.txt";
 
-    public Auth(Socket socket) {
+    public Auth(SocketWrapper socket) {
         this.socket = socket;
     }
 
     @Override
     public void run() {
-        String method = readSocketLine(socket).toLowerCase();
+        String method = socket.readLine().toLowerCase();
         switch (method) {
             case "login":
                 login();
@@ -30,16 +29,16 @@ public class Auth extends ConnectionHandler {
                 register();
                 break;
             default:
-                writeSocket(socket, "1 Invalid command");
+                socket.writeLine("1 Invalid command");
         }
     }
 
     public void login() {
-        String argsString = readSocketLine(socket);
+        String argsString = socket.readLine();
         Map<String, Object> args = jsonStringToMap(argsString);
 
         if (!checkUser((String) args.get("username"), (String) args.get("password"))) {
-            writeSocket(socket, "1 Invalid username or password");
+            socket.writeLine("1 Invalid username or password");
             return;
         }
 
@@ -48,12 +47,12 @@ public class Auth extends ConnectionHandler {
 
         System.out.println("New login: " + args.get("username") + " " + token);
 
-        writeSocket(socket, "0 " + token);
+        socket.writeLine("0 " + token);
         Matchmaking.getMatchmaking().addPlayer(new Player(socket, token));
     }
 
     public void register() {
-        String argsString = readSocketLine(socket);
+        String argsString = socket.readLine();
         Map<String, Object> args = jsonStringToMap(argsString);
 
         try {
@@ -70,12 +69,12 @@ public class Auth extends ConnectionHandler {
             bufferedWriter.close();
             fileWriter.close();
         } catch (IOException e) {
-            writeSocket(socket, "1 An error occurred");
+            socket.writeLine("1 An error occurred");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
 
-        writeSocket(socket, "0 ");
+        socket.writeLine("0 ");
         System.out.println("New register: " + args.get("username"));
     }
 

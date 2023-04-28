@@ -12,7 +12,7 @@ public class AGame extends Game {
     public void run() {
         System.out.println("Game started with " + players.size() + " players.\n");
         for (Player player : players) {
-            writeSocket(player.getSocket(), "Playing the game!");
+            player.writeLine("Playing the game!");
         }
     }
 }
