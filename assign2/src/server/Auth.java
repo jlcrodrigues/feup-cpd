@@ -13,6 +13,9 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.logging.Level;
 
+/**
+ * Defines functions within the authentication task.
+ */
 public class Auth extends ConnectionHandler {
     private final String fileName = "src/server/users.txt";
 
@@ -20,6 +23,9 @@ public class Auth extends ConnectionHandler {
         this.socket = socket;
     }
 
+    /**
+     * Executes authentication method specified in the message: either login or register.
+     */
     @Override
     public void run() {
         String method = socket.readLine().toLowerCase();
@@ -86,6 +92,12 @@ public class Auth extends ConnectionHandler {
         Store.getStore().log(Level.INFO, "New register: " + args.get("username"));
     }
 
+    /**
+     * Check if the provided credentials match our records.
+     * @param username Username to check.
+     * @param password Password for that account.
+     * @return True if the credentials are correct and falser otherwise.
+     */
     private boolean checkUser(String username, String password)  {
         String userPassword = getUserPassword(username);
         if (userPassword == null) {
@@ -102,6 +114,11 @@ public class Auth extends ConnectionHandler {
         return userPassword.equals(bytesToHex(encodedHash));
     }
 
+    /**
+     * Retrieve the hashed user password from storage.
+     * @param username Username to search for.
+     * @return User password hashed with sha-256 or null if the user does not exist.
+     */
     private String getUserPassword(String username) {
         File file = new File(fileName);
 

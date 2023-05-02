@@ -3,11 +3,18 @@ package server.store;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * Defines utility functions to deal with sockets.
+ */
 public class SocketWrapper {
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
 
+    /**
+     * Creates the wrapper. Opens relevant buffers.
+     * @param socket
+     */
     public SocketWrapper(Socket socket) {
         this.socket = socket;
         InputStream input = null;

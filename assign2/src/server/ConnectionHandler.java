@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+/**
+ * Defines a general use task. It can be used to handle new connections or as a super class for other tasks.
+ */
 public class ConnectionHandler implements Runnable {
     protected SocketWrapper socket;
     protected BufferedReader reader;
