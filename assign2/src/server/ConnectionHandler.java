@@ -1,9 +1,12 @@
 package server;
 
+import server.store.SocketWrapper;
+import server.store.Store;
+
 import java.io.*;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class ConnectionHandler implements Runnable {
     protected SocketWrapper socket;
@@ -19,7 +22,7 @@ public class ConnectionHandler implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("New connection: " + socket.getSocket().getInetAddress().getHostAddress());
+        Store.getStore().log(Level.INFO, "New connection: " + socket.getSocket().getInetAddress().getHostAddress());
         Store store = Store.getStore();
 
         String line = socket.readLine().toLowerCase();

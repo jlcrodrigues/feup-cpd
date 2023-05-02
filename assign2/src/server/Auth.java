@@ -1,15 +1,17 @@
 package server;
 
 import server.game.Player;
+import server.store.SocketWrapper;
+import server.store.Store;
 
 import java.io.*;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class Auth extends ConnectionHandler {
     private final String fileName = "src/server/users.txt";
@@ -45,7 +47,7 @@ public class Auth extends ConnectionHandler {
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString();
 
-        System.out.println("New login: " + args.get("username") + " " + token);
+        Store.getStore().log(Level.INFO, "New login: " + args.get("username") + " " + token);
 
         socket.writeLine("0 " + token);
         Matchmaking.getMatchmaking().addPlayer(new Player(socket, token));
@@ -75,11 +77,10 @@ public class Auth extends ConnectionHandler {
         }
 
         socket.writeLine("0 ");
-        System.out.println("New register: " + args.get("username"));
+        Store.getStore().log(Level.INFO, "New register: " + args.get("username"));
     }
 
     private boolean checkUser(String username, String password)  {
-        System.out.println("checkUser(" + username + ", " + password + ")");
         String userPassword = getUserPassword(username);
         if (userPassword == null) {
             return false;
@@ -112,7 +113,7 @@ public class Auth extends ConnectionHandler {
 
             scanner.close();
         } catch (FileNotFoundException e) {
-            System.out.println("File not found: " + fileName);
+            Store.getStore().log(Level.SEVERE, "File not found: " + fileName);
         }
         return null;
     }

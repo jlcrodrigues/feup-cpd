@@ -1,8 +1,6 @@
 package server.game;
 
-import server.SocketWrapper;
-
-import java.net.Socket;
+import server.store.SocketWrapper;
 
 public class Player {
     private SocketWrapper socket;

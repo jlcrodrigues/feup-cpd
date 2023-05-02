@@ -1,7 +1,11 @@
 package server;
 
+import server.store.SocketWrapper;
+import server.store.Store;
+
 import java.io.*;
 import java.net.*;
+import java.util.logging.Level;
 
 public class Server {
 
@@ -9,8 +13,7 @@ public class Server {
         Store store = Store.getStore();
 
         try (ServerSocket serverSocket = new ServerSocket(store.getPort())) {
-
-            System.out.println("Server is listening on port " + store.getPort());
+            store.log(Level.INFO, "Server is listening on port "  + store.getPort());
 
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -20,7 +23,7 @@ public class Server {
             }
 
         } catch (IOException ex) {
-            System.out.println("Server exception: " + ex.getMessage());
+            store.log(Level.SEVERE, "Server exception: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
