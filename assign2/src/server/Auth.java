@@ -1,6 +1,6 @@
 package server;
 
-import server.game.Player;
+import server.game.User;
 import server.store.SocketWrapper;
 import server.store.Store;
 
@@ -47,10 +47,16 @@ public class Auth extends ConnectionHandler {
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString();
 
-        Store.getStore().log(Level.INFO, "New login: " + args.get("username") + " " + token);
+        User user = new User(socket, token, (String) args.get("username"));
 
+        if (!Store.getStore().loginUser(user)) {
+            socket.writeLine("1 User already logged in");
+            Store.getStore().log(Level.INFO, "Login attempt: " + args.get("username") + " already logged in");
+            return;
+        }
         socket.writeLine("0 " + token);
-        Matchmaking.getMatchmaking().addPlayer(new Player(socket, token));
+        Store.getStore().log(Level.INFO, "New login: " + args.get("username") + " " + token);
+        Matchmaking.getMatchmaking().addPlayer(user);
     }
 
     public void register() {

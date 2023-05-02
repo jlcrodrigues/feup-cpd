@@ -35,38 +35,27 @@ public class ConnectionHandler implements Runnable {
         }
     }
 
-
-
     protected static Map<String, Object> jsonStringToMap(String jsonString) {
         Map<String, Object> map = new HashMap<>();
-
-        // Remove the outer curly braces from the JSON string
         jsonString = jsonString.substring(1, jsonString.length() - 1);
-
-        // Split the remaining string into key-value pairs
         String[] keyValuePairs = jsonString.split(",");
 
-        // Iterate over each key-value pair and add it to the map
         for (String pair : keyValuePairs) {
-            // Split each key-value pair into key and value
             String[] keyValue = pair.split(":");
             String key = keyValue[0].replaceAll("\"", "").trim();
             String valueString = keyValue[1].replaceAll("\"", "").trim();
             Object value;
 
-            // Try to parse the value as an integer or a double
             try {
                 value = Integer.parseInt(valueString);
             } catch (NumberFormatException e) {
                 try {
                     value = Double.parseDouble(valueString);
                 } catch (NumberFormatException ex) {
-                    // If the value is not a number, use it as a string
                     value = valueString;
                 }
             }
 
-            // Add the key-value pair to the map
             map.put(key, value);
         }
 

@@ -7,15 +7,15 @@ import java.util.logging.Level;
 
 public class AGame extends Game {
 
-    public AGame(List<Player> players) {
-        super(players);
+    public AGame(List<User> users) {
+        super(users);
     }
 
     @Override
     public void run() {
-        Store.getStore().log(Level.INFO, "Game started with " + players.size() + " players.");
-        for (Player player : players) {
-            player.writeLine("Playing the game!");
+        Store.getStore().log(Level.INFO, "Game started with " + users.size() + " players.");
+        for (User user : users) {
+            user.writeLine("Playing the game!");
         }
     }
 }

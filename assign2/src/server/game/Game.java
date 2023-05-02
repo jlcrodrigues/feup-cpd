@@ -5,9 +5,9 @@ import server.ConnectionHandler;
 import java.util.List;
 
 public abstract class Game extends ConnectionHandler {
-    protected List<Player> players;
+    protected List<User> users;
 
-    public Game(List<Player> players) {
-        this.players = players;
+    public Game(List<User> users) {
+        this.users = users;
     }
 }

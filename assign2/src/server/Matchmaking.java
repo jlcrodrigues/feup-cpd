@@ -2,7 +2,7 @@ package server;
 
 import server.game.AGame;
 import server.game.Game;
-import server.game.Player;
+import server.game.User;
 import server.store.Store;
 
 import java.util.ArrayList;
@@ -10,20 +10,20 @@ import java.util.List;
 
 public class Matchmaking {
     private static Matchmaking instance;
-    private List<Player> players;
+    private List<User> users;
 
     public Matchmaking() {
-        players = new ArrayList<>();
+        users = new ArrayList<>();
     }
 
-    public void addPlayer(Player player) {
-        players.add(player);
-        if (players.size() == 2) {
+    public void addPlayer(User user) {
+        users.add(user);
+        if (users.size() == 2) {
             startGame();
         }
     }
 
-    public static Matchmaking getMatchmaking() {
+    public synchronized static Matchmaking getMatchmaking() {
         if (instance == null) {
             instance = new Matchmaking();
         }
@@ -31,8 +31,8 @@ public class Matchmaking {
     }
 
     private void startGame() {
-        Game game = new AGame(new ArrayList<>(players));
-        players.clear();
+        Game game = new AGame(new ArrayList<>(users));
+        users.clear();
         Store store = Store.getStore();
         store.execute(game);
     }

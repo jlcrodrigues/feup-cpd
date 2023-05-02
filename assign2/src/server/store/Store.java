@@ -1,5 +1,8 @@
 package server.store;
 
+import server.concurrent.ConcurrentHashMap;
+import server.game.User;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,6 +16,7 @@ public class Store {
     private ExecutorService threadPool;
     private int port;
     private Logger logger;
+    private ConcurrentHashMap<String, User> users;
 
     private Store() {
         port = 8080;
@@ -20,9 +24,10 @@ public class Store {
         threadPool = Executors.newFixedThreadPool(numThreads);
 
         initLogger();
+        users = new ConcurrentHashMap<>();
     }
 
-    public static Store getStore() {
+    public synchronized static Store getStore() {
         if (instance == null) {
             instance = new Store();
         }
@@ -35,6 +40,12 @@ public class Store {
 
     public void execute(Runnable task) {
         threadPool.execute(task);
+    }
+
+    public boolean loginUser(User user) {
+        if (users.containsKey(user.getUsername())) return false;
+        users.put(user.getUsername(), user);
+        return true;
     }
 
     public void log(Level level, String message) {
