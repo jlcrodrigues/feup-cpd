@@ -45,6 +45,8 @@ public class Auth extends ConnectionHandler {
         String argsString = socket.readLine();
         Map<String, Object> args = jsonStringToMap(argsString);
 
+        if (!validInput(args)) return;
+
         if (!checkUser((String) args.get("username"), (String) args.get("password"))) {
             socket.writeLine("1 Invalid username or password");
             return;
@@ -68,6 +70,13 @@ public class Auth extends ConnectionHandler {
     public void register() {
         String argsString = socket.readLine();
         Map<String, Object> args = jsonStringToMap(argsString);
+
+        if (!validInput(args)) return;
+
+        if (getUserPassword((String) args.get("username")) != null) {
+            socket.writeLine("1 Username already in use.");
+            return;
+        }
 
         try {
             FileWriter fileWriter = new FileWriter(fileName, true);
@@ -139,6 +148,18 @@ public class Auth extends ConnectionHandler {
             Store.getStore().log(Level.SEVERE, "File not found: " + fileName);
         }
         return null;
+    }
+
+    private Boolean validInput(Map<String, Object> args) {
+        if (args.get("username") == null || args.get("username").equals("")) {
+            socket.writeLine("1 Username not provided");
+            return false;
+        }
+        else if (args.get("password") == null || args.get("password").equals("")) {
+            socket.writeLine("1 Password not provided");
+            return false;
+        }
+        return true;
     }
 
     private static String bytesToHex(byte[] hash) {
