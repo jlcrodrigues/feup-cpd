@@ -1,53 +1,35 @@
 package server;
 
-import server.game.AGame;
-import server.game.Game;
+import client.Session;
 import server.game.User;
+import server.store.SocketWrapper;
 import server.store.Store;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
-/**
- * Defines matchmaking logic. This class is a singleton that contains the current pool of queued players.
- */
-public class Matchmaking {
-    private static Matchmaking instance;
-    private List<User> users;
-
-    public Matchmaking() {
-        users = new ArrayList<>();
+public class Matchmaking extends ConnectionHandler {
+    public Matchmaking(SocketWrapper socketWrapper) {
+        super(socketWrapper);
     }
 
-    /**
-     * Add a player to queue. If the stopping criteria is met, the game will be started.
-     * @param user
-     */
-    public void addPlayer(User user) {
-        users.add(user);
-        if (users.size() == 2) {
-            startGame();
+    @Override
+    public void run() {
+        String type = socket.readLine();
+        Map<String, Object> args = jsonStringToMap(socket.readLine());
+        User user = Store.getStore().getUser((String) args.get("token"));
+        Queue queue = Queue.getQueue();
+        switch (type) {
+            case "casual":
+                queue.addCasualPlayer(user);
+                socket.writeLine("0");
+                break;
+            case "ranked":
+                //TODO queue.addRankedPlayer(user);
+                break;
+            default:
+                socket.writeLine("1 Invalid command");
         }
     }
 
-    /**
-     * Get the matchmaking instance. If it does not exist yet, one will be created.
-     * @return Matchmaking instance.
-     */
-    public synchronized static Matchmaking getMatchmaking() {
-        if (instance == null) {
-            instance = new Matchmaking();
-        }
-        return instance;
-    }
 
-    /**
-     * Create a new game task. Removes users from queue.
-     */
-    private void startGame() {
-        Game game = new AGame(new ArrayList<>(users));
-        users.clear();
-        Store store = Store.getStore();
-        store.execute(game);
-    }
 }

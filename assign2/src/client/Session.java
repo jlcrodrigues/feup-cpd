@@ -3,15 +3,14 @@ package client;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
     private static Session instance;
     private Socket socket;
-    private String token;
+    private Map<String, Object> profile;
+    private Scanner scanner;
 
     private Session() {
         Properties properties = new Properties();
@@ -31,6 +30,8 @@ public class Session {
         } catch (IOException ex) {
             System.out.println("I/O error: " + ex.getMessage());
         }
+
+        scanner = new Scanner(System.in);
     }
 
     public static Session getSession() {
@@ -44,12 +45,12 @@ public class Session {
         this.socket = socket;
     }
 
-    public String getToken() {
-        return token;
+    public String getProfileInfo(String field) {
+        return profile.get(field).toString();
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setProfile(Map<String, Object> profile) {
+        this.profile = profile;
     }
 
     public void writeMessage(String module, String method, Map<String, Object> args) {
@@ -63,6 +64,10 @@ public class Session {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Scanner getScanner() {
+        return scanner;
     }
 
     public String[] readResponse() {
@@ -92,5 +97,32 @@ public class Session {
                 .collect(Collectors.joining(","));
         json += "}";
         return json;
+    }
+
+    public static Map<String, Object> jsonStringToMap(String jsonString) {
+        Map<String, Object> map = new HashMap<>();
+        jsonString = jsonString.substring(1, jsonString.length() - 1);
+        String[] keyValuePairs = jsonString.split(",");
+
+        for (String pair : keyValuePairs) {
+            String[] keyValue = pair.split(":");
+            String key = keyValue[0].replaceAll("\"", "").trim();
+            String valueString = keyValue[1].replaceAll("\"", "").trim();
+            Object value;
+
+            try {
+                value = Integer.parseInt(valueString);
+            } catch (NumberFormatException e) {
+                try {
+                    value = Double.parseDouble(valueString);
+                } catch (NumberFormatException ex) {
+                    value = valueString;
+                }
+            }
+
+            map.put(key, value);
+        }
+
+        return map;
     }
 }

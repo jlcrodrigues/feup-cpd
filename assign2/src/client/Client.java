@@ -6,6 +6,7 @@ import client.states.State;
 import java.net.*;
 import java.io.*;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class Client {
 

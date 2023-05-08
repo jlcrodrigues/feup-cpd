@@ -6,11 +6,20 @@ public class User {
     private SocketWrapper socket;
     private String token;
     private String username;
+    private int elo;
 
-    public User(SocketWrapper socket, String token, String username) {
+    public User(SocketWrapper socket, String username, int elo) {
         this.socket = socket;
-        this.token = token;
         this.username = username;
+        this.elo = elo;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public SocketWrapper getSocket() {
+        return socket;
     }
 
     public String readLine() {
@@ -29,4 +38,7 @@ public class User {
         socket.writeLine(message);
     }
 
+    public int getElo() {
+        return elo;
+    }
 }

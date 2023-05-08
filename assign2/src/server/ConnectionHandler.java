@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Defines a general use task. It can be used to handle new connections or as a super class for other tasks.
@@ -32,6 +33,9 @@ public class ConnectionHandler implements Runnable {
         switch (line) {
             case "auth":
                 store.execute(new Auth(socket));
+                break;
+            case "matchmaking":
+                store.execute(new Matchmaking(socket));
                 break;
             default:
                 socket.writeLine("1 Invalid command");
@@ -63,6 +67,15 @@ public class ConnectionHandler implements Runnable {
         }
 
         return map;
+    }
+
+    protected static String mapToJsonString(Map<String, Object> map) {
+        String json = "{";
+        json += map.entrySet().stream()
+                .map(entry -> "\"" + entry.getKey() + "\":" + "\"" + entry.getValue().toString() + "\"")
+                .collect(Collectors.joining(","));
+        json += "}";
+        return json;
     }
 
 }

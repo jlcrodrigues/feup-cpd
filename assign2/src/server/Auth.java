@@ -8,6 +8,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
@@ -46,25 +47,34 @@ public class Auth extends ConnectionHandler {
         Map<String, Object> args = jsonStringToMap(argsString);
 
         if (!validInput(args)) return;
+        Store store = Store.getStore();
 
-        if (!checkUser((String) args.get("username"), (String) args.get("password"))) {
+        User user = checkUser((String) args.get("username"), (String) args.get("password"));
+        if (user == null) {
             socket.writeLine("1 Invalid username or password");
+            store.registerIdleSocket(socket);
             return;
         }
 
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString();
 
-        User user = new User(socket, token, (String) args.get("username"));
+        user.setToken(token);
 
         if (!Store.getStore().loginUser(user)) {
             socket.writeLine("1 User already logged in");
-            Store.getStore().log(Level.INFO, "Login attempt: " + args.get("username") + " already logged in");
+            store.log(Level.INFO, "Login attempt: " + args.get("username") + " already logged in");
+            store.registerIdleSocket(socket);
             return;
         }
-        socket.writeLine("0 " + token);
-        Store.getStore().log(Level.INFO, "New login: " + args.get("username") + " " + token);
-        Matchmaking.getMatchmaking().addPlayer(user);
+        Map<String, Object> userInfo = new HashMap<>() {{
+            put("username", user.getUsername());
+            put("token", token);
+            put("elo", user.getElo());
+        }};
+        socket.writeLine("0 " + mapToJsonString(userInfo));
+        store.log(Level.INFO, "New login: " + args.get("username") + " " + token);
+        store.registerIdleSocket(socket);
     }
 
     public void register() {
@@ -73,7 +83,7 @@ public class Auth extends ConnectionHandler {
 
         if (!validInput(args)) return;
 
-        if (getUserPassword((String) args.get("username")) != null) {
+        if (getUserInfo((String) args.get("username")) != null) {
             socket.writeLine("1 Username already in use.");
             return;
         }
@@ -105,30 +115,34 @@ public class Auth extends ConnectionHandler {
      * Check if the provided credentials match our records.
      * @param username Username to check.
      * @param password Password for that account.
-     * @return True if the credentials are correct and falser otherwise.
+     * @return User object if the credentials are correct and null otherwise.
      */
-    private boolean checkUser(String username, String password)  {
-        String userPassword = getUserPassword(username);
-        if (userPassword == null) {
-            return false;
+    private User checkUser(String username, String password)  {
+        String[] info = getUserInfo(username);
+        if (info == null) {
+            return null;
         }
+        String userPassword = info[0];
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
-            return false;
+            return null;
         }
         byte[] encodedHash = digest.digest(
                 password.getBytes(StandardCharsets.UTF_8));
-        return userPassword.equals(bytesToHex(encodedHash));
+        if (!userPassword.equals(bytesToHex(encodedHash))) {
+            return null;
+        }
+        return new User(socket, username, Integer.parseInt(info[1]));
     }
 
     /**
-     * Retrieve the hashed user password from storage.
+     * Retrieve the hashed user password and elo from storage.
      * @param username Username to search for.
-     * @return User password hashed with sha-256 or null if the user does not exist.
+     * @return List with user password hashed with sha-256 and elo or null if the user does not exist.
      */
-    private String getUserPassword(String username) {
+    private String[] getUserInfo(String username) {
         File file = new File(fileName);
 
         try {
@@ -139,7 +153,7 @@ public class Auth extends ConnectionHandler {
                 String[] fields = line.split(",");
 
                 if (fields[0].equals(username)) {
-                    return fields[1];
+                    return new String[]{fields[1], fields[2]};
                 }
             }
 

@@ -17,5 +17,7 @@ public class AGame extends Game {
         for (User user : users) {
             user.writeLine("Playing the game!");
         }
+
+        finish();
     }
 }
