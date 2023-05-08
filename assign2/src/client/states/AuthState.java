@@ -2,12 +2,14 @@ package client.states;
 
 import client.Session;
 
+import java.io.Console;
 import java.util.Map;
 import java.util.Scanner;
 
 public class AuthState implements State {
     @Override
     public State step() {
+        breakLn();
         printBanner();
         String option = "";
         Boolean status = false;
@@ -46,6 +48,7 @@ public class AuthState implements State {
             Session.getSession().setProfile(profile);
             return true;
         } else {
+            breakLn();
             System.out.println("Error registering: " + response[1] );
             return false;
         }
@@ -53,10 +56,16 @@ public class AuthState implements State {
 
     private String[] sendAuthRequest(String method) {
         Scanner scanner = Session.getSession().getScanner();
-        System.out.print("username: ");
+        System.out.print("Username: ");
         String username = scanner.nextLine();
-        System.out.print("password: ");
-        String password = scanner.nextLine();
+
+        String password;
+        Console console = System.console();
+        if (console == null) {
+            password = scanner.nextLine();
+        }
+        char[] passwordArray = console.readPassword("Password: ");
+        password = new String(passwordArray);
 
         Session session = Session.getSession();
         session.writeMessage("auth",
