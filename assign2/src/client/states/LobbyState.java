@@ -32,8 +32,11 @@ public class LobbyState implements State {
                     return new LobbyState();
                 }
             case "2":
-                // TODO
-                break;
+                if (joinGame("ranked")) {
+                    return new GameState();
+                } else {
+                    return new LobbyState();
+                }
             case "3":
                 return printProfile();
         }

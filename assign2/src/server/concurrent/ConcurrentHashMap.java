@@ -1,7 +1,6 @@
 package server.concurrent;
 
-import server.game.User;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -53,10 +52,10 @@ public class ConcurrentHashMap<K, V> {
     }
 
 
-    public User[] values() {
+    public Collection<V> values() {
         lock.readLock().lock();
         try {
-            return map.values().toArray(new User[0]);
+            return map.values();
         } finally {
             lock.readLock().unlock();
         }

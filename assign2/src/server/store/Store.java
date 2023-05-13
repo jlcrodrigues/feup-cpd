@@ -1,15 +1,21 @@
 package server.store;
 
+import server.MatchmakingQueue;
+import server.Server;
 import server.concurrent.ConcurrentHashMap;
 import server.game.User;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -23,6 +29,7 @@ public class Store {
     private ExecutorService threadPool;
     private Selector selector;
     private int port;
+    private int teamSize;
     private Logger logger;
     private ConcurrentHashMap<String, User> users;
 
@@ -30,7 +37,15 @@ public class Store {
      * Initiates the store and associated data structures.
      */
     private Store() {
-        port = 8080;
+        Properties properties = new Properties();
+        try (InputStream is = Server.class.getResourceAsStream("application.properties")) {
+            properties.load(is);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        port = Integer.parseInt(properties.getProperty("port"));
+        teamSize = Integer.parseInt(properties.getProperty("teamSize"));
         int numThreads = Runtime.getRuntime().availableProcessors(); // use one thread per CPU core
         threadPool = Executors.newFixedThreadPool(numThreads);
 
@@ -42,6 +57,8 @@ public class Store {
 
         initLogger();
         users = new ConcurrentHashMap<>();
+
+        setMatchmakingScheduler();
     }
 
     /**
@@ -57,6 +74,10 @@ public class Store {
 
     public int getPort() {
         return port;
+    }
+
+    public int getTeamSize() {
+        return teamSize;
     }
 
     /**
@@ -122,5 +143,16 @@ public class Store {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Run ranked matchmaking every 5 seconds.
+     * Because matchmaking will vary through time, it has to run periodically and not only when new players join.
+     */
+    private void setMatchmakingScheduler() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        scheduler.scheduleAtFixedRate(() -> threadPool.execute(
+                () -> MatchmakingQueue.getQueue().matchRanked()), 0, 5, TimeUnit.SECONDS);
     }
 }

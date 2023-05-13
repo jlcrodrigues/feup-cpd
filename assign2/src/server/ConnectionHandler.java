@@ -26,7 +26,6 @@ public class ConnectionHandler implements Runnable {
 
     @Override
     public void run() {
-        Store.getStore().log(Level.INFO, "New connection: " + socket.getSocket().getInetAddress().getHostAddress());
         Store store = Store.getStore();
 
         String line = socket.readLine().toLowerCase();

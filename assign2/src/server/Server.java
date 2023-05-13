@@ -33,6 +33,7 @@ public class Server {
                         SocketChannel clientSocketChannel = socketChannel.accept();
                         SocketWrapper socket = new SocketWrapper(clientSocketChannel.socket());
 
+                        store.log(Level.INFO, "New connection: " + socket.getSocket().getInetAddress().getHostAddress());
                         ConnectionHandler handler = new ConnectionHandler(socket);
                         store.execute(handler);
                     } else if (key.isReadable()) {
