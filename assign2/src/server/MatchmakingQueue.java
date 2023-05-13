@@ -1,27 +1,29 @@
 package server;
 
+import server.concurrent.ConcurrentArrayDeque;
 import server.game.AGame;
 import server.game.Game;
 import server.game.User;
 import server.store.Store;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Defines matchmaking logic. This class is a singleton that contains the current pool of queued players.
  */
 public class MatchmakingQueue {
     private static MatchmakingQueue instance;
-    private List<User> casualQueue;
-    private Queue<User> rankedQueue;
+    private ConcurrentArrayDeque<User> casualQueue;
+    private ConcurrentArrayDeque<User> rankedQueue;
     private Map<String, Date> rankedQueueTimes;
     private final int timeFactor = 8;
     private final int timeBaseline = 100;
 
     public MatchmakingQueue() {
-        casualQueue = new ArrayList<>();
-        rankedQueue = new ArrayDeque<>();
-        rankedQueueTimes = new HashMap<>();
+        casualQueue = new ConcurrentArrayDeque<>();
+        rankedQueue = new ConcurrentArrayDeque<>();
+        rankedQueueTimes = new ConcurrentHashMap<>();
     }
 
     /**
@@ -29,14 +31,14 @@ public class MatchmakingQueue {
      * @param user
      */
     public void addCasualPlayer(User user) {
-        casualQueue.add(user);
-        if (casualQueue.size() == Store.getStore().getTeamSize()) {
+        casualQueue.addLast(user);
+        if (casualQueue.size() == Store.getStore().getTeamSize() * 2) {
             startGame();
         }
     }
 
     public void addRankedPlayer(User user) {
-        rankedQueue.add(user);
+        rankedQueue.addLast(user);
         rankedQueueTimes.put(user.getUsername(), new Date());
         matchRanked();
     }
@@ -46,11 +48,11 @@ public class MatchmakingQueue {
      * This is done by iterating a queue of players (this gives priority to players who have been waiting the longest).
      * Then, it will group players into games based on their eligibility to play (elo and time spent waiting).
      */
-    public void matchRanked() {
+    public synchronized void matchRanked() {
         int teamSize = Store.getStore().getTeamSize();
         if (rankedQueue.size() < teamSize) return;
 
-        Queue<User> temp = new LinkedList<>(rankedQueue);
+        Queue<User> temp = new LinkedList<>(rankedQueue.getQueue());
         ArrayList<ArrayList<User>> games = new ArrayList<>();
 
         while (!temp.isEmpty()) {
@@ -86,8 +88,9 @@ public class MatchmakingQueue {
     /**
      * Create a new game task. Removes users from queue.
      */
-    private void startGame() {
-        Game game = new AGame(new ArrayList<>(casualQueue));
+    private synchronized void startGame() {
+        if (casualQueue.size() < Store.getStore().getTeamSize() * 2) return;
+        Game game = new AGame(new ArrayList<>(casualQueue.getQueue()));
         casualQueue.clear();
         Store store = Store.getStore();
         store.execute(game);

@@ -49,7 +49,7 @@ public class Auth extends ConnectionHandler {
         if (!validInput(args)) return;
         Store store = Store.getStore();
 
-        User user = checkUser((String) args.get("username"), (String) args.get("password"));
+        User user = checkUser(args.get("username").toString(), args.get("password").toString());
         if (user == null) {
             socket.writeLine("1 Invalid username or password");
             store.registerIdleSocket(socket);
@@ -83,7 +83,7 @@ public class Auth extends ConnectionHandler {
 
         if (!validInput(args)) return;
 
-        if (getUserInfo((String) args.get("username")) != null) {
+        if (getUserInfo(args.get("username").toString()) != null) {
             socket.writeLine("1 Username already in use.");
             return;
         }
@@ -94,10 +94,10 @@ public class Auth extends ConnectionHandler {
 
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] encodedHash = digest.digest(
-                    ((String) args.get("password")).getBytes(StandardCharsets.UTF_8));
+                    (args.get("password").toString()).getBytes(StandardCharsets.UTF_8));
 
             bufferedWriter.newLine();
-            bufferedWriter.write(args.get("username") + "," + bytesToHex(encodedHash));
+            bufferedWriter.write(args.get("username") + "," + bytesToHex(encodedHash) + ",1000");
 
             bufferedWriter.close();
             fileWriter.close();
@@ -108,7 +108,9 @@ public class Auth extends ConnectionHandler {
         }
 
         socket.writeLine("0 ");
-        Store.getStore().log(Level.INFO, "New register: " + args.get("username"));
+        Store store = Store.getStore();
+        store.log(Level.INFO, "New register: " + args.get("username"));
+        store.registerIdleSocket(socket);
     }
 
     /**

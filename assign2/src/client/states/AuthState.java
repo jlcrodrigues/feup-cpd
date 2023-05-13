@@ -21,7 +21,7 @@ public class AuthState implements State {
             option = Session.getSession().getScanner().nextLine();
 
             if (option.equals("1")) status = login();
-            if (option.equals("2")) status = register();
+            if (option.equals("2")) register();
         }
 
         return new LobbyState();
@@ -34,7 +34,7 @@ public class AuthState implements State {
             System.out.println("Successfully registered");
             return true;
         } else {
-            System.out.println("Error registering");
+            System.out.println("Error registering: " + response[1]);
             return false;
         }
     }
@@ -49,7 +49,7 @@ public class AuthState implements State {
             return true;
         } else {
             breakLn();
-            System.out.println("Error registering: " + response[1] );
+            System.out.println("Error signing in: " + response[1] );
             return false;
         }
     }
