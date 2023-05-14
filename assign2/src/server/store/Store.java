@@ -145,7 +145,7 @@ public class Store {
         logger.addHandler(consoleHandler);
 
         try {
-            FileHandler fileHandler = new FileHandler();
+            FileHandler fileHandler = new FileHandler("logs.log", true);
             fileHandler.setFormatter(new LoggerFormatter());
             logger.addHandler(fileHandler);
         } catch (IOException e) {

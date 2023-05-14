@@ -67,10 +67,12 @@ public class AuthState implements State {
         String password;
         Console console = System.console();
         if (console == null) {
+            System.out.print("Password: ");
             password = scanner.nextLine();
+        } else {
+            char[] passwordArray = console.readPassword("Password: ");
+            password = new String(passwordArray);
         }
-        char[] passwordArray = console.readPassword("Password: ");
-        password = new String(passwordArray);
 
         Session session = Session.getSession();
         session.writeMessage("auth",

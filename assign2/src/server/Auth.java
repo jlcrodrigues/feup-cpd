@@ -32,9 +32,11 @@ public class Auth extends ConnectionHandler {
         switch (method) {
             case "login":
                 login();
+                Store.getStore().registerIdleSocket(socket);
                 break;
             case "register":
                 register();
+                Store.getStore().registerIdleSocket(socket);
                 break;
             case "logout":
                 logout();
@@ -55,7 +57,6 @@ public class Auth extends ConnectionHandler {
         User user = checkUser(args.get("username").toString(), args.get("password").toString());
         if (user == null) {
             socket.writeLine("1 Invalid username or password");
-            store.registerIdleSocket(socket);
             return;
         }
 
@@ -67,12 +68,10 @@ public class Auth extends ConnectionHandler {
         if (!Store.getStore().loginUser(user)) {
             socket.writeLine("1 User already logged in");
             store.log(Level.INFO, "Login attempt: " + args.get("username") + " already logged in");
-            store.registerIdleSocket(socket);
             return;
         }
         socket.writeLine("0 " + mapToJsonString(user.toMap()));
         store.log(Level.INFO, "New login: " + args.get("username") + " " + token);
-        store.registerIdleSocket(socket);
     }
 
     public void register() {
@@ -108,7 +107,6 @@ public class Auth extends ConnectionHandler {
         socket.writeLine("0 ");
         Store store = Store.getStore();
         store.log(Level.INFO, "New register: " + args.get("username"));
-        store.registerIdleSocket(socket);
     }
 
     private void logout() {
