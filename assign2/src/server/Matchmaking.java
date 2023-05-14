@@ -26,10 +26,21 @@ public class Matchmaking extends ConnectionHandler {
                 queue.addRankedPlayer(user);
                 socket.writeLine("0");
                 break;
+            case "profile":
+                sendProfile(user);
+                Store.getStore().registerIdleSocket(socket);
+                break;
             default:
                 socket.writeLine("1 Invalid command");
         }
     }
 
-
+    private void sendProfile(User user) {
+        if (user == null) {
+            socket.writeLine("1 Invalid token");
+            return;
+        }
+        user.setSocket(socket);
+        socket.writeLine("0 " + mapToJsonString(user.toMap()));
+    }
 }

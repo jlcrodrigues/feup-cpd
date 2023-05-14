@@ -17,11 +17,13 @@ public class AuthState implements State {
         while (!status) {
             System.out.println("\t\t1) Login");
             System.out.println("\t\t2) Register");
+            System.out.println("\t\t0) Exit");
 
             option = Session.getSession().getScanner().nextLine();
 
             if (option.equals("1")) status = login();
             if (option.equals("2")) register();
+            if (option.equals("0")) return null;
         }
 
         return new LobbyState();

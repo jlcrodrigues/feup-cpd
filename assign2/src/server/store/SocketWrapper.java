@@ -46,4 +46,8 @@ public class SocketWrapper {
     public void writeLine(String message) {
         writer.println(message);
     }
+
+    public String toString() {
+        return String.format("%s:%d", socket.getInetAddress().getHostAddress(), socket.getPort());
+    }
 }

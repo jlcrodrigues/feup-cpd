@@ -14,12 +14,13 @@ public class LobbyState implements State {
         System.out.println("\n\t1) Play casual");
         System.out.println("\t2) Play ranked");
         System.out.println("\t3) See profile");
+        System.out.println("\t4) Log out");
         System.out.println("\t0) Exit");
 
         Scanner scanner = Session.getSession().getScanner();
 
         String option = scanner.nextLine();
-        while (!(option.matches("[0-3]"))) {
+        while (!(option.matches("[0-4]"))) {
             System.out.println("Invalid option");
             option = scanner.nextLine();
         }
@@ -39,6 +40,9 @@ public class LobbyState implements State {
                 }
             case "3":
                 return printProfile();
+            case "4":
+                logout();
+                return new AuthState();
         }
         return null;
     }
@@ -81,5 +85,13 @@ public class LobbyState implements State {
             return new LobbyState();
         }
         return null;
+    }
+
+    private void logout() {
+        Session session = Session.getSession();
+        Map<String, Object> args = Map.of("token", session.getProfileInfo("token"));
+        session.writeMessage("auth", "LOGOUT", args);
+        session.setProfile(null);
+        session.readResponse();
     }
 }

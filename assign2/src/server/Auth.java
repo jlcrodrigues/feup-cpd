@@ -8,7 +8,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
@@ -36,6 +35,10 @@ public class Auth extends ConnectionHandler {
                 break;
             case "register":
                 register();
+                break;
+            case "logout":
+                logout();
+                Store.getStore().registerIdleSocket(socket);
                 break;
             default:
                 socket.writeLine("1 Invalid command");
@@ -67,12 +70,7 @@ public class Auth extends ConnectionHandler {
             store.registerIdleSocket(socket);
             return;
         }
-        Map<String, Object> userInfo = new HashMap<>() {{
-            put("username", user.getUsername());
-            put("token", token);
-            put("elo", user.getElo());
-        }};
-        socket.writeLine("0 " + mapToJsonString(userInfo));
+        socket.writeLine("0 " + mapToJsonString(user.toMap()));
         store.log(Level.INFO, "New login: " + args.get("username") + " " + token);
         store.registerIdleSocket(socket);
     }
@@ -111,6 +109,14 @@ public class Auth extends ConnectionHandler {
         Store store = Store.getStore();
         store.log(Level.INFO, "New register: " + args.get("username"));
         store.registerIdleSocket(socket);
+    }
+
+    private void logout() {
+        String argsString = socket.readLine();
+        String token = jsonStringToMap(argsString).get("token").toString();
+        Store.getStore().log(Level.INFO, "Logout: " + token);
+        Store.getStore().logoutUser(token);
+        socket.writeLine("0 ");
     }
 
     /**

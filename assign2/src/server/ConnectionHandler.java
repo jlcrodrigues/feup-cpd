@@ -28,7 +28,12 @@ public class ConnectionHandler implements Runnable {
     public void run() {
         Store store = Store.getStore();
 
-        String line = socket.readLine().toLowerCase();
+        String tempLine = socket.readLine();
+        if (tempLine == null) {
+            store.log(Level.INFO, "Error reading from socket " + socket + ", may be disconnected.");
+            return;
+        }
+        String line = tempLine.toLowerCase();
         switch (line) {
             case "auth":
                 store.execute(new Auth(socket));

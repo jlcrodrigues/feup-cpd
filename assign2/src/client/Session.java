@@ -41,6 +41,38 @@ public class Session {
         return instance;
     }
 
+    public void close() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isLoggedIn() {
+        return profile != null;
+    }
+
+    public void load() {
+        try {
+            File file = new File("client/session.txt");
+            FileInputStream fileStream = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream));
+
+            String token = reader.readLine();
+
+            Map<String, Object> args = Map.of("token", token);
+            writeMessage("matchmaking", "profile", args);
+            String[] response = readResponse();
+            if (response[0].equals("0")) {
+                profile = jsonStringToMap(response[1]);
+            }
+        } catch (Exception e) {
+            // do not load if session does not exist
+            System.out.println("Session file not found");
+        }
+    }
+
     public void setSocket(Socket socket) {
         this.socket = socket;
     }
@@ -51,6 +83,14 @@ public class Session {
 
     public void setProfile(Map<String, Object> profile) {
         this.profile = profile;
+
+        try {
+            PrintWriter writer = new PrintWriter("client/session.txt");
+            writer.println(profile == null ? "" : profile.get("token"));
+            writer.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public void writeMessage(String module, String method, Map<String, Object> args) {

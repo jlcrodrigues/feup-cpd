@@ -60,4 +60,13 @@ public class ConcurrentHashMap<K, V> {
             lock.readLock().unlock();
         }
     }
+
+    public void remove(K token) {
+        lock.writeLock().lock();
+        try {
+            map.remove(token);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 }

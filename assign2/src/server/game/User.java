@@ -2,6 +2,9 @@ package server.game;
 
 import server.store.SocketWrapper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class User {
     private SocketWrapper socket;
     private String token;
@@ -22,6 +25,10 @@ public class User {
         return socket;
     }
 
+    public void setSocket(SocketWrapper socket) {
+        this.socket = socket;
+    }
+
     public String readLine() {
         return socket.readLine();
     }
@@ -40,5 +47,13 @@ public class User {
 
     public int getElo() {
         return elo;
+    }
+
+    public Map<String, Object> toMap() {
+        return new HashMap<>() {{
+            put("username", username);
+            put("token", token);
+            put("elo", elo);
+        }};
     }
 }

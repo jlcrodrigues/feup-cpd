@@ -110,6 +110,10 @@ public class Store {
         return true;
     }
 
+    public void logoutUser(String token) {
+        users.remove(token);
+    }
+
     public void log(Level level, String message) {
         logger.log(level, message);
     }
