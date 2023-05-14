@@ -11,7 +11,7 @@ It is designed to be easy to implement so the different methods are going to be 
 ## Requests
 
 Requests are formed by three lines:
- - Module name: `AUTH`, `GAME`
+ - Module name: `AUTH`, `MATCHMAKING`, `GAME`
  - Method name: `LOGIN`, `LOGOUT`, `JOIN_GAME`, `MOVE`, ...
  - Parameters in JSON format: `{"username": "user", "password": "pass"}`, ...
 

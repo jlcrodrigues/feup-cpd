@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * Defines a concurrent hash map.
+ * This can be used when thread-safety is needed.
+ * It uses a ReadWriteLock with SE's HashMap.
+ */
 public class ConcurrentHashMap<K, V> {
     private final Map<K, V> map;
     private final ReadWriteLock lock;

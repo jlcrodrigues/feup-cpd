@@ -1,9 +1,12 @@
 package server.concurrent;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Defines a concurrent array deque.
+ * This can be used when thread-safety is needed and works as a list, queue, etc.
+ * It uses a ReentrantLock with SE's ArrayDeque.
+ */
 public class ConcurrentArrayDeque<T> {
     private ArrayDeque<T> deque;
     private ReentrantLock lock;

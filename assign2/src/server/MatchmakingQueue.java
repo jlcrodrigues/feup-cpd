@@ -14,11 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MatchmakingQueue {
     private static MatchmakingQueue instance;
-    private ConcurrentArrayDeque<User> casualQueue;
-    private ConcurrentArrayDeque<User> rankedQueue;
+    private ConcurrentArrayDeque<User> casualQueue; // casual collection behaves as a list
+    private ConcurrentArrayDeque<User> rankedQueue; // ranked collection behaves as a queue
     private Map<String, Date> rankedQueueTimes;
-    private final int timeFactor = 8;
-    private final int timeBaseline = 100;
+
+    private final int timeFactor = 8; // elo time relaxation factor
+    private final int timeBaseline = 100; // minimum elo distance
 
     public MatchmakingQueue() {
         casualQueue = new ConcurrentArrayDeque<>();
@@ -37,6 +38,11 @@ public class MatchmakingQueue {
         }
     }
 
+    /**
+     * Add a player to the ranked queue.
+     * The users are kept in a queue (FIFO) and their joining times in a separate map.
+     * @param user User to add to queue.
+     */
     public void addRankedPlayer(User user) {
         rankedQueue.addLast(user);
         rankedQueueTimes.put(user.getUsername(), new Date());

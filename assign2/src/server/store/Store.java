@@ -122,6 +122,10 @@ public class Store {
         return selector;
     }
 
+    /**
+     * Register a socket to the selector for reading.
+     * When a user is idling, their socket will be placed in the selector so that it can be redirected.
+     */
     public void registerIdleSocket(SocketWrapper socket) {
         try {
             SocketChannel channel = socket.getSocket().getChannel();

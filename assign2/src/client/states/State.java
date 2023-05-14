@@ -1,6 +1,10 @@
 package client.states;
 
-
+/**
+ * State interface
+ * Define basic element of the program's state machine.
+ * Each state has a step() method that returns the next state.
+ */
 public interface State {
     State step();
 

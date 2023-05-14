@@ -5,6 +5,10 @@ import client.Session;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * This class represents the lobby state of the client.
+ * From here, client can move on to joining a queue, among other things.
+ */
 public class LobbyState implements State {
     @Override
     public State step() {

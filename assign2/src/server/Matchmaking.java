@@ -35,6 +35,11 @@ public class Matchmaking extends ConnectionHandler {
         }
     }
 
+    /**
+     * Sends the user's profile to the client upon request.
+     * This is used to reestablish broken connections.
+     * @param user The user whose profile is to be sent.
+     */
     private void sendProfile(User user) {
         if (user == null) {
             socket.writeLine("1 Invalid token");

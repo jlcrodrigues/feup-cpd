@@ -6,6 +6,9 @@ import java.io.Console;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * Default entry point of the program. Allows user to authenticate.
+ */
 public class AuthState implements State {
     @Override
     public State step() {

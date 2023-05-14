@@ -6,6 +6,10 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Defines a session with the server.
+ * This is used to both interact with the server and keep relevant ephemeral information.
+ */
 public class Session {
     private static Session instance;
     private Socket socket;
@@ -53,6 +57,10 @@ public class Session {
         return profile != null;
     }
 
+    /**
+     * Loads a session from permanent storage.
+     * Every time a token is created it is stored so it can be used to load the session.
+     */
     public void load() {
         try {
             File file = new File("client/session.txt");
@@ -106,10 +114,19 @@ public class Session {
         }
     }
 
+    /**
+     * Get the scanner used to read user input.
+     * This is used to avoid creating multiple scanners.
+     */
     public Scanner getScanner() {
         return scanner;
     }
 
+    /**
+     * Utility function to read a response from the server.
+     * This follows the protocol's specification.
+     * @return String array with two elements: status code and response body.
+     */
     public String[] readResponse() {
         try {
             InputStream input = socket.getInputStream();
@@ -120,6 +137,10 @@ public class Session {
         }
     }
 
+    /**
+     * Utility function to read a line from the server.
+     * @return String with the line read.
+     */
     public String readLine() {
         try {
             InputStream input = socket.getInputStream();

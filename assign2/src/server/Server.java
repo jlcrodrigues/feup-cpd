@@ -16,7 +16,7 @@ public class Server {
         Store store = Store.getStore();
 
         try {
-            registerSocketChannel();
+            registerServerSocketChannel();
 
             while (true) {
                 Selector selector = store.getSelector();
@@ -51,7 +51,7 @@ public class Server {
         }
     }
 
-    private static void registerSocketChannel() throws IOException {
+    private static void registerServerSocketChannel() throws IOException {
         Store store = Store.getStore();
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.socket().bind(new InetSocketAddress(store.getPort()));

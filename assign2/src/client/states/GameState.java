@@ -2,6 +2,9 @@ package client.states;
 
 import client.Session;
 
+/**
+ * Defines the actual game playing.
+ */
 public class GameState implements State {
     @Override
     public State step() {
