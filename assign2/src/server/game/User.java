@@ -10,6 +10,7 @@ public class User {
     private String token;
     private String username;
     private int elo;
+    private String state;
 
     public User(SocketWrapper socket, String username, int elo) {
         this.socket = socket;
@@ -49,11 +50,20 @@ public class User {
         return elo;
     }
 
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getState() {
+        return state;
+    }
+
     public Map<String, Object> toMap() {
         return new HashMap<>() {{
             put("username", username);
             put("token", token);
             put("elo", elo);
+            put("state", state == null ? "none" : state);
         }};
     }
 }

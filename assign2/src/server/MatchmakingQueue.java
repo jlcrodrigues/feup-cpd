@@ -44,6 +44,7 @@ public class MatchmakingQueue {
      * @param user User to add to queue.
      */
     public void addRankedPlayer(User user) {
+        user.setState("queue");
         rankedQueue.addLast(user);
         rankedQueueTimes.put(user.getUsername(), new Date());
         matchRanked();
