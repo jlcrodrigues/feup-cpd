@@ -15,7 +15,6 @@ public class AGame extends Game {
     public void run() {
         Store.getStore().log(Level.INFO, "Game started with " + users.size() + " players.");
         for (User user : users) {
-            System.out.println(user.getState());
             user.writeLine("Playing the game!");
         }
 

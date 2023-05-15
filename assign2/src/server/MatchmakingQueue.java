@@ -32,6 +32,7 @@ public class MatchmakingQueue {
      * @param user
      */
     public void addCasualPlayer(User user) {
+        user.setState("queue");
         casualQueue.addLast(user);
         if (casualQueue.size() == Store.getStore().getTeamSize() * 2) {
             startGame();

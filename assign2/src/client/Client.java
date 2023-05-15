@@ -32,7 +32,7 @@ public class Client {
     private static State initialState(Session session) {
         if (session.isLoggedIn()) {
             if (session.getProfileInfo("state").equals("none"))
-                new LobbyState();
+                return new LobbyState();
             else if (session.getProfileInfo("state").equals("queue"))
                 return new GameState();
         }
