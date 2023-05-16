@@ -1,9 +1,7 @@
 package server.game;
 
-import server.store.Store;
 
 import java.util.*;
-import java.util.logging.Level;
 
 public class AGame extends Game {
 
@@ -23,39 +21,47 @@ public class AGame extends Game {
 
     public AGame(List<User> users) {
         super(users);
+
         nrOfSpots = users.size()/2 + 2;
 
         // divide users into 2 teams
         team1 = users.subList(0, users.size() / 2);
         team2 = users.subList(users.size() / 2, users.size());
 
-        spotsTeam1 = new ArrayList<>();
-        for (int i = 0; i < nrOfSpots; i++) {
-            List<String> spot = new ArrayList<>();
-            for (int j = 0; j < 2; j++) {
-                spot.add("");
-            }
-            spotsTeam1.add(spot);
-        }
-
-        spotsTeam2 = new ArrayList<>();
-        for (int i = 0; i < nrOfSpots; i++) {
-            List<String> spot = new ArrayList<>();
-            for (int j = 0; j < 2; j++) {
-                spot.add("");
-            }
-            spotsTeam2.add(spot);
-        }
-
         shots = new HashMap<>();
-
         input = new HashMap<>();
+        spotsTeam1 = new ArrayList<>();
+        spotsTeam2 = new ArrayList<>();
+
+        // initialize the spots for each team
+        initializeSpots(spotsTeam1,users.size()/2);
+        initializeSpots(spotsTeam2,users.size()/2);
+
 
     }
 
     @Override
     public void run() {
-        Store.getStore().log(Level.INFO, "Game started with " + users.size() + " players.");
+
+        // send team members and elo
+        sendTeams();
+
+        // process input from each user
+        for (User user : users) {
+            readFromUser(user);
+        }
+
+        // play the game and check the winner
+        processGame();
+        String winner = checkWinner();
+
+        // send the game info to each user to be displayed there
+        sendGameInfo(winner);
+
+        finish();
+    }
+
+    private void sendTeams(){
 
         Map<String,Object> team1Map = new HashMap<>();
         Map<String,Object> team2Map = new HashMap<>();
@@ -70,24 +76,15 @@ public class AGame extends Game {
         for (User user : users){
             user.writeLine(mapToJsonString(team1Map)+";"+ mapToJsonString(team2Map));
         }
+    }
 
-        for (User user : users) {
-            readFromUser(user);
-        }
-
-        processGame();
-
-
-        String winner = checkWinner();
-
+    private void sendGameInfo(String winner){
         Map<String,Object> team1SpotsMap = new HashMap<>();
+        Map<String,Object> team2SpotsMap = new HashMap<>();
 
         for (int i = 0; i < nrOfSpots; i++){
             team1SpotsMap.put(String.valueOf(i+1),spotsTeam1.get(i).get(0));
         }
-
-        Map<String,Object> team2SpotsMap = new HashMap<>();
-
         for (int i = 0; i < nrOfSpots; i++){
             team2SpotsMap.put(String.valueOf(i+1),spotsTeam2.get(i).get(0));
         }
@@ -98,10 +95,6 @@ public class AGame extends Game {
                     + mapToJsonString(shots)+";"
                     + mapToJsonString(Map.of("winner",winner)));
         }
-
-
-        Store.getStore().log(Level.INFO, "Game finished.");
-        finish();
     }
 
     private void readFromUser(User user) {
@@ -126,28 +119,30 @@ public class AGame extends Game {
 
         String argsString = user.readLine();
         Map<String,Object> args = jsonStringToMap(argsString);
+
+        // check if the arguments are valid
         if (!args.containsKey("spot") || !args.containsKey("shot")) {
             user.writeLine("1 Invalid arguments");
             return;
         }
 
         int spot = Integer.parseInt(args.get("spot").toString());
-
         int shot = Integer.parseInt(args.get("shot").toString());
 
+        // store the input from each user to be processed later
         Map<String,Object> playerChoices = new HashMap<>();
-
         playerChoices.put("spot",spot);
         playerChoices.put("shot",shot);
-
         input.put(user,mapToJsonString(playerChoices));
 
+        // send the confirmation to the user
         user.writeLine("0");
 
     }
 
     private void processGame(){
 
+        // put each user in a spot
         for (User user : input.keySet()){
             Map<String,Object> playerMap = jsonStringToMap(input.get(user));
             int spot = (int) playerMap.get("spot");
@@ -157,17 +152,20 @@ public class AGame extends Game {
             getSpots(user).set(spot-1, player);
         }
 
+        // process the shots
         for (User user : input.keySet()){
             Map<String,Object> playerMap = jsonStringToMap(input.get(user));
             int shot = (int) playerMap.get("shot");
             List<List<String>> opponentSpots = getOpponentSpots(user);
             String targetName = opponentSpots.get(shot-1).get(0);
+
+
             if (Objects.equals(targetName, "")) {
-                shots.put(user.getUsername(),"");
+                shots.put(user.getUsername(),"");  // missed
             }
             else {
-                shots.put(user.getUsername(),targetName);
-                opponentSpots.set(shot-1, Arrays.asList(targetName, "dead"));
+                shots.put(user.getUsername(),targetName); // hit
+                opponentSpots.set(shot-1, Arrays.asList(targetName, "dead")); // mark the spot as dead
             }
         }
     }
@@ -202,6 +200,16 @@ public class AGame extends Game {
         }
     }
 
+    private void initializeSpots(List<List<String>> spots, int maxPerSpot)
+    {
+        for (int i = 0; i < nrOfSpots; i++) {
+            List<String> spot = new ArrayList<>();
+            for (int j = 0; j < maxPerSpot * 2 ; j++) {
+                spot.add("");
+            }
+            spots.add(spot);
+        }
+    }
 }
 
 

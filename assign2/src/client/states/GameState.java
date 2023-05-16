@@ -4,7 +4,6 @@ import client.Session;
 import server.store.Store;
 
 import java.util.*;
-import java.util.logging.Level;
 
 import static client.Session.jsonStringToMap;
 
@@ -23,47 +22,43 @@ public class GameState implements State {
         System.out.println("Waiting in queue");
         Session session = Session.getSession();
 
+        // display the teams and each player elo
         String teams = session.readLine();
-
         createTeams(teams);
-
         breakLn();
         System.out.println("Game started\n");
         printTeams();
 
-        String spot = chooseSpot();
-
-        String shot = takeShot();
-
+        // get the input from the user
+        String spot = getInput("Choose a spot to camp");
+        String shot = getInput("Choose a spot to shoot");
         System.out.println("Waiting for other players to make their actions");
 
+        // send the input to the server
         Map<String,Object> args = new HashMap<>();
         args.put("spot",spot);
         args.put("shot",shot);
-
         session.writeMessage("game","choice",args);
-
         session.readResponse();
 
+        // get the round info from the server
         String round = session.readLine();
-        System.out.println(round);
 
+        // display the starting positions
         createTeamSpots(round);
-
-        System.out.println("Round starting positions:\n");
-
+        System.out.println("\nRound starting positions:\n");
         printTeamSpots();
 
+        // display the shots taken in the round
         processShots(round);
-
         System.out.println("ROUND HISTORY:");
-
         printShots();
 
+        // display the final positions after the shots were taken
         System.out.println("Round final positions:\n");
-
         printTeamSpots();
 
+        // display the winner of the round
         displayWinner(round);
 
         System.out.println("Press enter to continue");
@@ -71,38 +66,22 @@ public class GameState implements State {
         return new LobbyState();
     }
 
-    private String chooseSpot() {
+    private String getInput(String message) {
         Session session = Session.getSession();
         int nrSpots = Store.getStore().getTeamSize() + 2;
 
-        System.out.println("Choose a spot in the game between 1 and " + nrSpots);
-        String spot = session.getScanner().nextLine();
+        System.out.println(message + " (1-" + nrSpots + ")");
+        String input = session.getScanner().nextLine();
 
-        while (!(spot.matches("[1-" + nrSpots + "]"))) {
-            System.out.println("Invalid spot.\nChoose a spot in the game between 1 and " + nrSpots);
-            spot = session.getScanner().nextLine();
+        while (!(input.matches("[1-" + nrSpots + "]"))) {
+            System.out.println("Invalid input.\n" + message + " (1-" + nrSpots + ")");
+            input = session.getScanner().nextLine();
         }
 
-        return spot;
-    }
-
-    private String takeShot() {
-        Session session = Session.getSession();
-        int nrSpots = Store.getStore().getTeamSize() + 2;
-
-        System.out.println("What spot do you want to shoot (1-" + nrSpots + ")?");
-        String shot = session.getScanner().nextLine();
-
-        while (!(shot.matches("[1-" + nrSpots + "]"))) {
-            System.out.println("Invalid spot.\nChoose a spot to shoot between 1 and " + nrSpots);
-            shot = session.getScanner().nextLine();
-        }
-
-        return shot;
+        return input;
     }
 
     private void createTeams (String teams) {
-
         String team1 = teams.split(";")[0];
         String team2 = teams.split(";")[1];
         createTeam(team1, this.team1);
@@ -229,9 +208,7 @@ public class GameState implements State {
                 System.out.println(shot + " shoted " + user + " right in the face!");
             }
         }
-
         System.out.println("\n");
-
     }
 
     public void displayWinner(String round) {
@@ -245,9 +222,4 @@ public class GameState implements State {
             System.out.println(winnerTeam + " WINS!");
         }
     }
-
-
-
-
-
 }
