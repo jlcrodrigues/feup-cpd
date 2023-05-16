@@ -7,17 +7,18 @@ import java.util.logging.Level;
 
 public class AGame extends Game {
 
-    // 2 teams and divide users per team
     List<User> team1;
     List<User> team2;
 
     int nrOfSpots;
 
-    List<String> spotsTeam1;
+    List<List<String>> spotsTeam1;
 
-    List<String> spotsTeam2;
+    List<List<String>> spotsTeam2;
 
-    Map<User,String> shots;
+    Map<String,Object> shots;
+
+    Map<User,String> input;
 
 
     public AGame(List<User> users) {
@@ -28,59 +29,74 @@ public class AGame extends Game {
         team1 = users.subList(0, users.size() / 2);
         team2 = users.subList(users.size() / 2, users.size());
 
-        spotsTeam1 = new ArrayList<>(Collections.nCopies(nrOfSpots, ""));
-        spotsTeam2 = new ArrayList<>(Collections.nCopies(nrOfSpots, ""));
+        spotsTeam1 = new ArrayList<>();
+        for (int i = 0; i < nrOfSpots; i++) {
+            List<String> spot = new ArrayList<>();
+            for (int j = 0; j < 2; j++) {
+                spot.add("");
+            }
+            spotsTeam1.add(spot);
+        }
+
+        spotsTeam2 = new ArrayList<>();
+        for (int i = 0; i < nrOfSpots; i++) {
+            List<String> spot = new ArrayList<>();
+            for (int j = 0; j < 2; j++) {
+                spot.add("");
+            }
+            spotsTeam2.add(spot);
+        }
 
         shots = new HashMap<>();
+
+        input = new HashMap<>();
 
     }
 
     @Override
     public void run() {
         Store.getStore().log(Level.INFO, "Game started with " + users.size() + " players.");
-        for (User user : team1){
-            user.writeLine("You are in team 1");
+
+        Map<String,Object> team1Map = new HashMap<>();
+        Map<String,Object> team2Map = new HashMap<>();
+        for (User user : team1) {
+            team1Map.put(user.getUsername(), user.getElo());
         }
+
         for (User user : team2){
-            user.writeLine("You are in team 2");
-        }
-        for (User user : users) {
-            readFromUser(user);
+            team2Map.put(user.getUsername(),user.getElo());
         }
 
-        printTeamSpots();
-
-        for (User user : users) {
-            user.writeLine("Spots chosen! Round started!");
+        for (User user : users){
+            user.writeLine(mapToJsonString(team1Map)+";"+ mapToJsonString(team2Map));
         }
 
         for (User user : users) {
             readFromUser(user);
         }
 
-        for (User user : shots.keySet()){
-            Store.getStore().log(Level.INFO, user.getUsername() + " : " + shots.get(user));
-            user.writeLine(shots.get(user));
+        processGame();
+
+
+        String winner = checkWinner();
+
+        Map<String,Object> team1SpotsMap = new HashMap<>();
+
+        for (int i = 0; i < nrOfSpots; i++){
+            team1SpotsMap.put(String.valueOf(i+1),spotsTeam1.get(i).get(0));
         }
 
-        printTeamSpots();
+        Map<String,Object> team2SpotsMap = new HashMap<>();
 
-        List<User> winner = checkWinner();
-
-        if (winner == null){
-            for (User user : users) {
-                user.writeLine("Round draw!");
-            }
+        for (int i = 0; i < nrOfSpots; i++){
+            team2SpotsMap.put(String.valueOf(i+1),spotsTeam2.get(i).get(0));
         }
-        else {
-            for (User user : winner) {
-                user.writeLine("You won!");
-            }
-            for (User user : users) {
-                if (!winner.contains(user)){
-                    user.writeLine("You lost!");
-                }
-            }
+
+        for (User user : users){
+            user.writeLine(mapToJsonString(team1SpotsMap)+";"
+                    + mapToJsonString(team2SpotsMap) + ";"
+                    + mapToJsonString(shots)+";"
+                    + mapToJsonString(Map.of("winner",winner)));
         }
 
 
@@ -99,126 +115,90 @@ public class AGame extends Game {
 
     private void game(User user) {
         String type = user.readLine().toLowerCase();
-        switch (type) {
-            case "choosespot":
-                chooseSpot(user);
-                break;
-            case "takeshot":
-                takeShot(user);
-                break;
-            default:
-                user.writeLine("1 Invalid command");
+        if (type.equals("choice")) {
+            getInput(user);
+        } else {
+            user.writeLine("1 Invalid command");
         }
     }
 
-    private void chooseSpot(User user) {
+    private void getInput(User user){
+
         String argsString = user.readLine();
         Map<String,Object> args = jsonStringToMap(argsString);
-        if (!args.containsKey("spot")) {
-            user.writeLine("1 Missing spot");
+        if (!args.containsKey("spot") || !args.containsKey("shot")) {
+            user.writeLine("1 Invalid arguments");
             return;
         }
-        int spot = Integer.parseInt(args.get("spot").toString());
-        getSpots(user).set(spot-1, user.getUsername());
-        Store.getStore().log(Level.INFO, "User " + user.getUsername() + " chose spot " + spot);
-        user.writeLine("0");
-    }
 
-    private void takeShot(User user) {
-        String argsString = user.readLine();
-        Map<String,Object> args = jsonStringToMap(argsString);
-        if (!args.containsKey("spot")) {
-            user.writeLine("1 Missing spot");
-            return;
-        }
         int spot = Integer.parseInt(args.get("spot").toString());
-        List<User> opponentTeam = getOpponentTeam(user);
-        List<String> opponentSpots = getOpponentSpots(user);
-        String targetName = opponentSpots.get(spot-1);
-        User target = opponentTeam.stream().filter(u -> u.getUsername().equals(targetName)).findFirst().orElse(null);
-        if (target == null) {
-            shots.put(user, "you missed");
-        }
-        else {
-            shots.put(user, "you hit " + target.getUsername());
-            //shots.put(target, "you were shot by " + user.getUsername());
-            opponentSpots.set(spot-1, "dead");
-        }
+
+        int shot = Integer.parseInt(args.get("shot").toString());
+
+        Map<String,Object> playerChoices = new HashMap<>();
+
+        playerChoices.put("spot",spot);
+        playerChoices.put("shot",shot);
+
+        input.put(user,mapToJsonString(playerChoices));
 
         user.writeLine("0");
+
     }
 
-    private List<User> getTeam(User user){
-        if (team1.contains(user)){
-            return team1;
+    private void processGame(){
+
+        for (User user : input.keySet()){
+            Map<String,Object> playerMap = jsonStringToMap(input.get(user));
+            int spot = (int) playerMap.get("spot");
+            List<String> player = new ArrayList<>();
+            player.add(user.getUsername());
+            player.add("alive");
+            getSpots(user).set(spot-1, player);
         }
-        return team2;
+
+        for (User user : input.keySet()){
+            Map<String,Object> playerMap = jsonStringToMap(input.get(user));
+            int shot = (int) playerMap.get("shot");
+            List<List<String>> opponentSpots = getOpponentSpots(user);
+            String targetName = opponentSpots.get(shot-1).get(0);
+            if (Objects.equals(targetName, "")) {
+                shots.put(user.getUsername(),"");
+            }
+            else {
+                shots.put(user.getUsername(),targetName);
+                opponentSpots.set(shot-1, Arrays.asList(targetName, "dead"));
+            }
+        }
     }
 
-    private List<String> getSpots(User user){
+    private List<List<String>> getSpots(User user){
         if (team1.contains(user)){
             return spotsTeam1;
         }
         return spotsTeam2;
     }
 
-    private List<User> getOpponentTeam(User user){
-        if (team1.contains(user)){
-            return team2;
-        }
-        return team1;
-    }
-
-    private List<String> getOpponentSpots(User user){
+    private List<List<String>> getOpponentSpots(User user){
         if (team1.contains(user)){
             return spotsTeam2;
         }
         return spotsTeam1;
     }
 
-    private List<String> formatTeamSpots(List<String> spots){
-        List<String> teamSpots = new ArrayList<>();
-        StringBuilder teamString = new StringBuilder();
-        for (String s : spots) {
-            // string with 10 chars max of name of player
-            int fixedSize = 10;
-            int padding = fixedSize - s.length();
-            int leftPadding = padding / 2;
-            int rightPadding = padding - leftPadding;
-            String player = String.format("%" + leftPadding + "s%s%" + rightPadding + "s", "", s, "");
-            teamString.append(player).append("     ");
-        }
-        teamSpots.add(teamString.toString());
-        teamString.setLength(0);
-        teamString.append("__________     ".repeat(spots.size()));
-        teamSpots.add(teamString.toString());
-        return teamSpots;
-    }
-
-    private void printTeamSpots(){
-        Store.getStore().log(Level.INFO, "Team 1:");
-        List<String> team1Spots = formatTeamSpots(spotsTeam1);
-        Store.getStore().log(Level.INFO, team1Spots.get(0));
-        Store.getStore().log(Level.INFO, team1Spots.get(1));
-
-        Store.getStore().log(Level.INFO, "Team 2:");
-        List<String> team2Spots = formatTeamSpots(spotsTeam2);
-        Store.getStore().log(Level.INFO, team2Spots.get(0));
-        Store.getStore().log(Level.INFO, team2Spots.get(1));
-    }
 
     // check who has less dead spots
-    private List<User> checkWinner(){
-        int team1Dead = Collections.frequency(spotsTeam1, "dead");
-        int team2Dead = Collections.frequency(spotsTeam2, "dead");
+    private String checkWinner(){
+        int team1Dead  = Collections.frequency(spotsTeam1.stream().map(spot -> spot.get(1)).toList(),"dead");
+        int team2Dead  = Collections.frequency(spotsTeam2.stream().map(spot -> spot.get(1)).toList(),"dead");
         if (team1Dead < team2Dead){
-            return team1;
+            return "TERRORISTS";
         }
         else if (team2Dead < team1Dead){
-            return team2;
+            return "COUNTER-TERRORISTS";
         }
         else {
-            return null;
+            return "draw";
         }
     }
 
