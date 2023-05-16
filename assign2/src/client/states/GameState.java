@@ -43,7 +43,6 @@ public class GameState implements State {
 
         // get the round info from the server
         String round = session.readLine();
-        System.out.println(round);
 
         // display the starting positions
         createTeamSpots(round);
@@ -121,8 +120,8 @@ public class GameState implements State {
     private String formatTeamSpots(List<List<String>> spots){
         StringBuilder teamString = new StringBuilder();
         for (List<String> player : spots) {
-            // string with 20 chars max of name of player
-            int fixedSize = 20;
+            // string with 30 chars max of name of player
+            int fixedSize = 30;
 
             String name = player.get(1);
             if (player.get(0).equals("dead")) {
@@ -135,7 +134,7 @@ public class GameState implements State {
             teamString.append(username).append("     ");
         }
         teamString.append("\n");
-        teamString.append("____________________     ".repeat(spots.size()));
+        teamString.append("______________________________     ".repeat(spots.size()));
         teamString.append("\n");
         return teamString.toString();
     }
@@ -173,6 +172,7 @@ public class GameState implements State {
 
             System.out.printf("%s | %s%n", terroristName, counterTerroristName);
         }
+        System.out.println("\n");
     }
 
     private void processShots(String round){

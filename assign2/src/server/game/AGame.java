@@ -188,6 +188,9 @@ public class AGame extends Game {
             }
             targetNames.append(player).append(" + ");
         }
+        if (targetNames.length() > 0)
+            targetNames.delete(targetNames.length()-3,targetNames.length());
+
         return targetNames.toString();
     }
 
