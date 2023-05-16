@@ -83,10 +83,10 @@ public class AGame extends Game {
         Map<String,Object> team2SpotsMap = new HashMap<>();
 
         for (int i = 0; i < nrOfSpots; i++){
-            team1SpotsMap.put(String.valueOf(i+1),spotsTeam1.get(i).get(0));
+            team1SpotsMap.put(String.valueOf(i+1),getTargetNames(spotsTeam1.get(i)));
         }
         for (int i = 0; i < nrOfSpots; i++){
-            team2SpotsMap.put(String.valueOf(i+1),spotsTeam2.get(i).get(0));
+            team2SpotsMap.put(String.valueOf(i+1),getTargetNames(spotsTeam2.get(i)));
         }
 
         for (User user : users){
@@ -146,10 +146,7 @@ public class AGame extends Game {
         for (User user : input.keySet()){
             Map<String,Object> playerMap = jsonStringToMap(input.get(user));
             int spot = (int) playerMap.get("spot");
-            List<String> player = new ArrayList<>();
-            player.add(user.getUsername());
-            player.add("alive");
-            getSpots(user).set(spot-1, player);
+            updateSpot(getSpots(user).get(spot-1),user.getUsername());
         }
 
         // process the shots
@@ -157,17 +154,73 @@ public class AGame extends Game {
             Map<String,Object> playerMap = jsonStringToMap(input.get(user));
             int shot = (int) playerMap.get("shot");
             List<List<String>> opponentSpots = getOpponentSpots(user);
-            String targetName = opponentSpots.get(shot-1).get(0);
 
-
-            if (Objects.equals(targetName, "")) {
+            if (!spotTaken(opponentSpots.get(shot-1))){
                 shots.put(user.getUsername(),"");  // missed
             }
             else {
+                String targetName = getTargetNames(opponentSpots.get(shot-1));
                 shots.put(user.getUsername(),targetName); // hit
-                opponentSpots.set(shot-1, Arrays.asList(targetName, "dead")); // mark the spot as dead
+                markSpotAsDead(opponentSpots.get(shot-1));
             }
         }
+    }
+
+    private void updateSpot(List<String> spot,String username){
+        if (spotTaken(spot)){
+            addPlayertoSpot(spot,username);
+        }
+        else {
+            spot.set(0,"alive");
+            spot.set(1,username);
+        }
+
+    }
+
+    private String getTargetNames(List<String> spot){
+        StringBuilder targetNames = new StringBuilder();
+        for (String player : spot){
+            if (player.equals("alive") || player.equals("dead")){
+                continue;
+            }
+            if (player.equals("")){
+                break;
+            }
+            targetNames.append(player).append(" + ");
+        }
+        return targetNames.toString();
+    }
+
+    private void markSpotAsDead(List<String> spot){
+        spot.set(0,"dead");
+    }
+
+    private boolean spotTaken(List<String> spot){
+        return !spot.get(0).equals("");
+    }
+
+
+    private void addPlayertoSpot(List<String> spot,String username){
+        for (String player : spot){
+            if (player.equals("")){
+                spot.set(spot.indexOf(player),username);
+                break;
+            }
+        }
+    }
+
+    private int getSpotNrOfPlayers(List<String> spot){
+        int nrOfPlayers = 0;
+        for (String player : spot){
+            if (player.equals("alive") || player.equals("dead")){
+                continue;
+            }
+            if (player.equals("")){
+                break;
+            }
+            nrOfPlayers++;
+        }
+        return nrOfPlayers;
     }
 
     private List<List<String>> getSpots(User user){
@@ -187,8 +240,8 @@ public class AGame extends Game {
 
     // check who has less dead spots
     private String checkWinner(){
-        int team1Dead  = Collections.frequency(spotsTeam1.stream().map(spot -> spot.get(1)).toList(),"dead");
-        int team2Dead  = Collections.frequency(spotsTeam2.stream().map(spot -> spot.get(1)).toList(),"dead");
+        int team1Dead  = teamNrOfDeads(spotsTeam1);
+        int team2Dead  = teamNrOfDeads(spotsTeam2);
         if (team1Dead < team2Dead){
             return "TERRORISTS";
         }
@@ -200,11 +253,24 @@ public class AGame extends Game {
         }
     }
 
+    private int teamNrOfDeads(List<List<String>> spotsTeam){
+        int deads = 0;
+
+        for (List<String> spot : spotsTeam){
+            if (spot.get(0).equals("dead")){
+                int spotPlayers = getSpotNrOfPlayers(spot);
+                deads += spotPlayers;
+            }
+        }
+
+        return deads;
+    }
+
     private void initializeSpots(List<List<String>> spots, int maxPerSpot)
     {
         for (int i = 0; i < nrOfSpots; i++) {
             List<String> spot = new ArrayList<>();
-            for (int j = 0; j < maxPerSpot * 2 ; j++) {
+            for (int j = 0; j < maxPerSpot + 1 ; j++) {
                 spot.add("");
             }
             spots.add(spot);

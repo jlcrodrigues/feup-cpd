@@ -43,6 +43,7 @@ public class GameState implements State {
 
         // get the round info from the server
         String round = session.readLine();
+        System.out.println(round);
 
         // display the starting positions
         createTeamSpots(round);
@@ -109,10 +110,10 @@ public class GameState implements State {
     private void createTeamSpot(String teamSpot, List<List<String>> teamSpotList){
         Map<String,Object> teamSpotMap = jsonStringToMap(teamSpot);
         for (String spot : teamSpotMap.keySet()) {
-            String user = teamSpotMap.get(spot).toString();
+            String users = teamSpotMap.get(spot).toString();
             List <String> player = new ArrayList<>();
-            player.add(user);
             player.add("alive");
+            player.add(users);
             teamSpotList.add(player);
         }
     }
@@ -123,8 +124,8 @@ public class GameState implements State {
             // string with 20 chars max of name of player
             int fixedSize = 20;
 
-            String name = player.get(0);
-            if (player.get(1).equals("dead")) {
+            String name = player.get(1);
+            if (player.get(0).equals("dead")) {
                 name+="(DEAD)";
             }
             int padding = fixedSize - name.length();
@@ -184,13 +185,13 @@ public class GameState implements State {
                 continue;
             }
             for (List<String> player : this.team1Spots) {
-                if (Objects.equals(player.get(0), user)){
-                    player.set(1, "dead");
+                if (Objects.equals(player.get(1), user)){
+                    player.set(0, "dead");
                 }
             }
             for (List<String> player : this.team2Spots) {
-                if (Objects.equals(player.get(0), user)){
-                    player.set(1, "dead");
+                if (Objects.equals(player.get(1), user)){
+                    player.set(0, "dead");
                 }
             }
         }
