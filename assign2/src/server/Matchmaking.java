@@ -28,7 +28,6 @@ public class Matchmaking extends ConnectionHandler {
                 break;
             case "profile":
                 sendProfile(user);
-                Store.getStore().registerIdleSocket(socket);
                 break;
             default:
                 socket.writeLine("1 Invalid command");
@@ -43,9 +42,12 @@ public class Matchmaking extends ConnectionHandler {
     private void sendProfile(User user) {
         if (user == null) {
             socket.writeLine("1 Invalid token");
+            Store.getStore().registerIdleSocket(socket);
             return;
         }
         user.setSocket(socket);
         socket.writeLine("0 " + mapToJsonString(user.toMap()));
+        if (user.getState() == null || user.getState().equals("none"))
+            Store.getStore().registerIdleSocket(socket);
     }
 }

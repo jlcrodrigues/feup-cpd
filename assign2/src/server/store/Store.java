@@ -7,7 +7,6 @@ import server.game.User;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;

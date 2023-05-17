@@ -32,6 +32,7 @@ public class MatchmakingQueue {
      * @param user
      */
     public void addCasualPlayer(User user) {
+        user.setState("queue");
         casualQueue.addLast(user);
         if (casualQueue.size() == Store.getStore().getTeamSize() * 2) {
             startGame();
@@ -44,6 +45,7 @@ public class MatchmakingQueue {
      * @param user User to add to queue.
      */
     public void addRankedPlayer(User user) {
+        user.setState("queue");
         rankedQueue.addLast(user);
         rankedQueueTimes.put(user.getUsername(), new Date());
         matchRanked();

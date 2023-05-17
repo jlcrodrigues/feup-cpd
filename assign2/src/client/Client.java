@@ -1,28 +1,41 @@
 package client;
 
 import client.states.AuthState;
+import client.states.GameState;
 import client.states.LobbyState;
 import client.states.State;
-
-import java.net.*;
-import java.io.*;
-import java.util.Properties;
-import java.util.Scanner;
 
 public class Client {
 
     public static void main(String[] args) {
+        boolean restart = false;
+        for (String arg : args) {
+            if (arg.equals("-r")) {
+                restart = true;
+                break;
+            }
+        }
+
         Session session = Session.getSession();
 
-        // commenting this line to make it easier running multiple instances
-        // uncomment it if you want to get persistent sessions
-        //session.load();
+        if (!restart)
+            session.load();
 
-        State state = session.isLoggedIn() ? new LobbyState() : new AuthState();
+        State state = initialState(session);
         while (state != null) {
             state = state.step();
         }
 
         session.close();
+    }
+
+    private static State initialState(Session session) {
+        if (session.isLoggedIn()) {
+            if (session.getProfileInfo("state").equals("none"))
+                return new LobbyState();
+            else if (session.getProfileInfo("state").equals("queue"))
+                return new GameState();
+        }
+        return new AuthState();
     }
 }

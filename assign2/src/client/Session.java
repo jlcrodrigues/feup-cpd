@@ -59,7 +59,7 @@ public class Session {
 
     /**
      * Loads a session from permanent storage.
-     * Every time a token is created it is stored so it can be used to load the session.
+     * Every time a token is created it is stored, so it can be used to load the session.
      */
     public void load() {
         try {
