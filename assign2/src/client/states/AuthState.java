@@ -83,12 +83,11 @@ public class AuthState implements State {
     }
 
     private void printBanner() {
-        System.out.println(" a88888b.  .d88888b   **  888888ba    .88888.   d8888b. ");
-        System.out.println("d8'   `88  88.    \"'  **  88    `8b  d8'   `8b      `88 ");
-        System.out.println("88         `Y88888b.      88     88  88     88  .aaadP' ");
-        System.out.println("88              `8b       88     88  88     88  88'     ");
-        System.out.println("Y8.   .88  d8'   .8P  **  88     88  Y8.   .8P  88.     ");
-        System.out.println(" Y88888P'  Y88888P    **  dP     dP   `8888P'   Y88888P");
+        System.out.println("   ___________    _   ______     ___ \n" +
+                "  / ____/ ___/   / | / / __ \\   |__ \\\n" +
+                " / /    \\__ \\   /  |/ / / / /   __/ /\n" +
+                "/ /___ ___/ /  / /|  / /_/ /   / __/ \n" +
+                "\\____//____/  /_/ |_/\\____/   /____/ \n");
         System.out.println();
     }
 
