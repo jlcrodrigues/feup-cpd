@@ -98,7 +98,12 @@ public class MatchmakingQueue {
      */
     private synchronized void startGame() {
         if (casualQueue.size() < Store.getStore().getTeamSize() * 2) return;
-        Game game = new AGame(new ArrayList<>(casualQueue.getQueue()));
+        ArrayList<User> players = new ArrayList<>(casualQueue.getQueue());
+        Game game = new AGame(players, false);
+        for (User player : players) {
+            player.setState("game");
+            player.setActiveGame(game);
+        }
         casualQueue.clear();
         Store store = Store.getStore();
         store.execute(game);
@@ -112,8 +117,10 @@ public class MatchmakingQueue {
         ArrayList<Game> games = new ArrayList<>();
         for (ArrayList<User> game : gamePlayers) {
             if (game.size() < Store.getStore().getTeamSize() * 2) continue;
-            Game g = new AGame(game);
+            Game g = new AGame(game, true);
             for (User user : game) {
+                user.setState("game");
+                user.setActiveGame(g);
                 rankedQueue.remove(user);
             }
             games.add(g);

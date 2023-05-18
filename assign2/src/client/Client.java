@@ -33,7 +33,8 @@ public class Client {
         if (session.isLoggedIn()) {
             if (session.getProfileInfo("state").equals("none"))
                 return new LobbyState();
-            else if (session.getProfileInfo("state").equals("queue"))
+            else if (session.getProfileInfo("state").equals("queue")
+             ||session.getProfileInfo("state").equals("game"))
                 return new GameState();
         }
         return new AuthState();

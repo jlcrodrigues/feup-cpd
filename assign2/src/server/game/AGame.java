@@ -1,26 +1,25 @@
 package server.game;
 
 
+import server.store.Store;
+
 import java.util.*;
+import java.util.logging.Level;
 
 public class AGame extends Game {
+    private List<User> team1;
+    private List<User> team2;
 
-    List<User> team1;
-    List<User> team2;
+    private int nrOfSpots;
 
-    int nrOfSpots;
+    private List<List<String>> spotsTeam1;
+    private List<List<String>> spotsTeam2;
 
-    List<List<String>> spotsTeam1;
+    private Map<String,Object> shots;
+    private Map<User,String> input;
 
-    List<List<String>> spotsTeam2;
-
-    Map<String,Object> shots;
-
-    Map<User,String> input;
-
-
-    public AGame(List<User> users) {
-        super(users);
+    public AGame(List<User> users, boolean isRanked) {
+        super(users, isRanked);
 
         nrOfSpots = users.size()/2 + 2;
 
@@ -36,20 +35,17 @@ public class AGame extends Game {
         // initialize the spots for each team
         initializeSpots(spotsTeam1,users.size()/2);
         initializeSpots(spotsTeam2,users.size()/2);
-
-
     }
 
     @Override
     public void run() {
+        Store.getStore().log(Level.INFO, (isRanked ? "Ranked" : "Casual") + " game #" + this.hashCode() + " started");
 
         // send team members and elo
         sendTeams();
 
-        // process input from each user
-        for (User user : users) {
-            readFromUser(user);
-        }
+        // process input from every user
+        readFromUsers();
 
         // play the game and check the winner
         processGame();
@@ -61,8 +57,27 @@ public class AGame extends Game {
         finish();
     }
 
+    /**
+     * Send teams list to all the players in the game.
+     */
     private void sendTeams(){
+        String teams = mapTeams();
 
+        for (User user : users){
+            user.writeLine(teams);
+        }
+    }
+
+    /**
+     * Send teams list to a certain player.
+     * @param user User to send the teams to
+     */
+    public void sendTeams(User user) {
+        String teams = mapTeams();
+        user.writeLine(teams);
+    }
+
+    private String mapTeams() {
         Map<String,Object> team1Map = new HashMap<>();
         Map<String,Object> team2Map = new HashMap<>();
         for (User user : team1) {
@@ -72,10 +87,7 @@ public class AGame extends Game {
         for (User user : team2){
             team2Map.put(user.getUsername(),user.getElo());
         }
-
-        for (User user : users){
-            user.writeLine(mapToJsonString(team1Map)+";"+ mapToJsonString(team2Map));
-        }
+        return mapToJsonString(team1Map)+";"+ mapToJsonString(team2Map);
     }
 
     private void sendGameInfo(String winner){
@@ -97,8 +109,24 @@ public class AGame extends Game {
         }
     }
 
+    private void readFromUsers() {
+        Set<User> userSet = new HashSet<>();
+        userSet.addAll(team1);
+        userSet.addAll(team2);
+
+        while (userSet.size() > 0) {
+            for (User user : userSet) {
+                if (user.getSocket().hasInput()) {
+                    readFromUser(user);
+                    userSet.remove(user);
+                    break;
+                }
+            }
+        }
+    }
+
     private void readFromUser(User user) {
-       String module = user.readLine().toLowerCase();
+        String module = user.readLine().toLowerCase();
         if (module.equals("game")) {
             game(user);
         } else {

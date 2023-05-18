@@ -50,4 +50,12 @@ public class SocketWrapper {
     public String toString() {
         return String.format("%s:%d", socket.getInetAddress().getHostAddress(), socket.getPort());
     }
+
+    public boolean hasInput() {
+        try {
+            return reader.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -11,11 +11,13 @@ public class User {
     private String username;
     private int elo;
     private String state;
+    private Game activeGame;
 
     public User(SocketWrapper socket, String username, int elo) {
         this.socket = socket;
         this.username = username;
         this.elo = elo;
+        this.activeGame = null;
     }
 
     public void setToken(String token) {
@@ -56,6 +58,14 @@ public class User {
 
     public String getState() {
         return state;
+    }
+
+    public void setActiveGame(Game game) {
+        this.activeGame = game;
+    }
+
+    public Game getActiveGame() {
+        return activeGame;
     }
 
     public Map<String, Object> toMap() {
