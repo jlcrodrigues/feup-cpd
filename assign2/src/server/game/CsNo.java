@@ -6,11 +6,16 @@ import server.store.Store;
 import java.util.*;
 import java.util.logging.Level;
 
-public class AGame extends Game {
+/**
+ * Defines a cs:no game.
+ * The basic idea is that players will choose spots to both hide and shoot.
+ * In the end, the teams that guesses most spots wins.
+ */
+public class CsNo extends Game {
     private List<User> team1;
     private List<User> team2;
 
-    private int nrOfSpots;
+    private final int nrOfSpots;
 
     private List<List<String>> spotsTeam1;
     private List<List<String>> spotsTeam2;
@@ -18,23 +23,15 @@ public class AGame extends Game {
     private Map<String,Object> shots;
     private Map<User,String> input;
 
-    public AGame(List<User> users, boolean isRanked) {
+    public CsNo(List<User> users, boolean isRanked) {
         super(users, isRanked);
 
         nrOfSpots = users.size()/2 + 2;
 
-        // divide users into 2 teams
-        team1 = users.subList(0, users.size() / 2);
-        team2 = users.subList(users.size() / 2, users.size());
+        initTeams();
 
-        shots = new HashMap<>();
-        input = new HashMap<>();
-        spotsTeam1 = new ArrayList<>();
-        spotsTeam2 = new ArrayList<>();
-
-        // initialize the spots for each team
-        initializeSpots(spotsTeam1,users.size()/2);
-        initializeSpots(spotsTeam2,users.size()/2);
+        initSpots(spotsTeam1,users.size()/2);
+        initSpots(spotsTeam2,users.size()/2);
     }
 
     @Override
@@ -55,6 +52,25 @@ public class AGame extends Game {
         sendGameInfo(winner);
 
         finish();
+    }
+
+    /**
+     * Divide players into approximately equal teams using a simple greedy approach.
+     */
+    private void initTeams() {
+        users.sort(Comparator.comparingInt(User::getElo));
+        team1 = new ArrayList<>();
+        team2 = new ArrayList<>();
+        for (int i = 0; i < users.size(); i += 2) {
+            team1.add(users.get(i));
+            team2.add(users.get(i + 1));
+        }
+
+        shots = new HashMap<>();
+        input = new HashMap<>();
+        spotsTeam1 = new ArrayList<>();
+        spotsTeam2 = new ArrayList<>();
+
     }
 
     /**
@@ -109,11 +125,15 @@ public class AGame extends Game {
         }
     }
 
+    /**
+     * Read input from every user. <br>
+     */
     private void readFromUsers() {
         Set<User> userSet = new HashSet<>();
         userSet.addAll(team1);
         userSet.addAll(team2);
 
+        // users can change sockets mid-game
         while (userSet.size() > 0) {
             for (User user : userSet) {
                 if (user.getSocket().hasInput()) {
@@ -125,26 +145,22 @@ public class AGame extends Game {
         }
     }
 
+    /**
+     * Read a user's choices.
+     */
     private void readFromUser(User user) {
         String module = user.readLine().toLowerCase();
         if (module.equals("game")) {
-            game(user);
-        } else {
-            user.writeLine("1 Invalid command");
+            String type = user.readLine().toLowerCase();
+            if (type.equals("choice")) {
+                getInput(user);
+                return;
+            }
         }
-    }
-
-    private void game(User user) {
-        String type = user.readLine().toLowerCase();
-        if (type.equals("choice")) {
-            getInput(user);
-        } else {
-            user.writeLine("1 Invalid command");
-        }
+        user.writeLine("1 Invalid command");
     }
 
     private void getInput(User user){
-
         String argsString = user.readLine();
         Map<String,Object> args = jsonStringToMap(argsString);
 
@@ -165,11 +181,9 @@ public class AGame extends Game {
 
         // send the confirmation to the user
         user.writeLine("0");
-
     }
 
     private void processGame(){
-
         // put each user in a spot
         for (User user : input.keySet()){
             Map<String,Object> playerMap = jsonStringToMap(input.get(user));
@@ -196,13 +210,12 @@ public class AGame extends Game {
 
     private void updateSpot(List<String> spot,String username){
         if (spotTaken(spot)){
-            addPlayertoSpot(spot,username);
+            addPlayerToSpot(spot,username);
         }
         else {
             spot.set(0,"alive");
             spot.set(1,username);
         }
-
     }
 
     private String getTargetNames(List<String> spot){
@@ -230,8 +243,7 @@ public class AGame extends Game {
         return !spot.get(0).equals("");
     }
 
-
-    private void addPlayertoSpot(List<String> spot,String username){
+    private void addPlayerToSpot(List<String> spot,String username){
         for (String player : spot){
             if (player.equals("")){
                 spot.set(spot.indexOf(player),username);
@@ -271,8 +283,8 @@ public class AGame extends Game {
 
     // check who has less dead spots
     private String checkWinner(){
-        int team1Dead  = teamNrOfDeads(spotsTeam1);
-        int team2Dead  = teamNrOfDeads(spotsTeam2);
+        int team1Dead  = teamNrOfDeaths(spotsTeam1);
+        int team2Dead  = teamNrOfDeaths(spotsTeam2);
         if (team1Dead < team2Dead){
             return "TERRORISTS";
         }
@@ -284,7 +296,7 @@ public class AGame extends Game {
         }
     }
 
-    private int teamNrOfDeads(List<List<String>> spotsTeam){
+    private int teamNrOfDeaths(List<List<String>> spotsTeam){
         int deads = 0;
 
         for (List<String> spot : spotsTeam){
@@ -297,7 +309,7 @@ public class AGame extends Game {
         return deads;
     }
 
-    private void initializeSpots(List<List<String>> spots, int maxPerSpot)
+    private void initSpots(List<List<String>> spots, int maxPerSpot)
     {
         for (int i = 0; i < nrOfSpots; i++) {
             List<String> spot = new ArrayList<>();

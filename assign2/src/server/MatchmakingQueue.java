@@ -1,7 +1,7 @@
 package server;
 
 import server.concurrent.ConcurrentArrayDeque;
-import server.game.AGame;
+import server.game.CsNo;
 import server.game.Game;
 import server.game.User;
 import server.store.Store;
@@ -99,7 +99,7 @@ public class MatchmakingQueue {
     private synchronized void startGame() {
         if (casualQueue.size() < Store.getStore().getTeamSize() * 2) return;
         ArrayList<User> players = new ArrayList<>(casualQueue.getQueue());
-        Game game = new AGame(players, false);
+        Game game = new CsNo(players, false);
         for (User player : players) {
             player.setState("game");
             player.setActiveGame(game);
@@ -117,7 +117,7 @@ public class MatchmakingQueue {
         ArrayList<Game> games = new ArrayList<>();
         for (ArrayList<User> game : gamePlayers) {
             if (game.size() < Store.getStore().getTeamSize() * 2) continue;
-            Game g = new AGame(game, true);
+            Game g = new CsNo(game, true);
             for (User user : game) {
                 user.setState("game");
                 user.setActiveGame(g);

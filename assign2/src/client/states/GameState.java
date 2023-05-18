@@ -46,11 +46,10 @@ public class GameState implements State {
 
         // get the round info from the server
         String round = session.readLine();
+        breakLn();
 
         // display the starting positions
         createTeamSpots(round);
-        System.out.println("\nRound starting positions:\n");
-        printTeamSpots();
 
         // display the shots taken in the round
         processShots(round);
@@ -153,16 +152,13 @@ public class GameState implements State {
 
     private void printTeams () {
         int maxTeamSize = Math.max(team1.size(), team2.size());
-        int teamNameWidth = 30; // Width of team name column
+        int teamNameWidth = 20; // Width of team name column
 
         String terroristTeamName = "Terrorists";
         String counterTerroristTeamName = "Counter-Terrorists";
 
         // Center the team names within their column
-        terroristTeamName = String.format("%-" + (teamNameWidth - terroristTeamName.length()) / 2 + "s%s%-" + (teamNameWidth - terroristTeamName.length()) / 2 + "s", "", terroristTeamName, "");
-        counterTerroristTeamName = String.format("%-" + (teamNameWidth - counterTerroristTeamName.length()) / 2 + "s%s%-" + (teamNameWidth - counterTerroristTeamName.length()) / 2 + "s", "", counterTerroristTeamName, "");
-
-        System.out.printf("%s | %s%n", terroristTeamName, counterTerroristTeamName);
+        printSpot(teamNameWidth, terroristTeamName, counterTerroristTeamName);
         System.out.printf("%s | %s%n", "-".repeat(teamNameWidth), "-".repeat(teamNameWidth));
 
         for (int i = 0; i < maxTeamSize; i++) {
@@ -170,12 +166,16 @@ public class GameState implements State {
             String counterTerroristName = i < team2.size() ? team2.get(i).get(0) + " (" + team2.get(i).get(1) + ")" : "";
 
             // Center the player names within their columns
-            terroristName = String.format("%-" + (teamNameWidth - terroristName.length()) / 2 + "s%s%-" + (teamNameWidth - terroristName.length()) / 2 + "s", "", terroristName, "");
-            counterTerroristName = String.format("%-" + (teamNameWidth - counterTerroristName.length()) / 2 + "s%s%-" + (teamNameWidth - counterTerroristName.length()) / 2 + "s", "", counterTerroristName, "");
-
-            System.out.printf("%s | %s%n", terroristName, counterTerroristName);
+            printSpot(teamNameWidth, terroristName, counterTerroristName);
         }
         System.out.println("\n");
+    }
+
+    private void printSpot(int teamNameWidth, String terroristTeamName, String counterTerroristTeamName) {
+        terroristTeamName = String.format("%-" + (teamNameWidth - terroristTeamName.length()) / 2 + "s%s%-" + (teamNameWidth - terroristTeamName.length()) / 2 + "s", "", terroristTeamName, "");
+        counterTerroristTeamName = String.format("%-" + (teamNameWidth - counterTerroristTeamName.length()) / 2 + "s%s%-" + (teamNameWidth - counterTerroristTeamName.length()) / 2 + "s", "", counterTerroristTeamName, "");
+
+        System.out.printf("%s | %s%n", terroristTeamName, counterTerroristTeamName);
     }
 
     private void processShots(String round){
@@ -202,14 +202,15 @@ public class GameState implements State {
     }
 
     private void printShots (){
-
         for (String shot : this.shotsMap.keySet()) {
             String user = this.shotsMap.get(shot).toString();
             if (Objects.equals(user, "")){
-                System.out.println(shot + " missed the shot!");
+                System.out.println(shot + " missed!");
             }
             else{
-                System.out.println(shot + " shoted " + user + " right in the face!");
+                Random r = new Random();
+                System.out.println(shot + " shot " + user
+                        + (r.nextDouble() < 0.2 ?" right in the face!" : "!"));
             }
         }
         System.out.println("\n");
@@ -223,7 +224,7 @@ public class GameState implements State {
             System.out.println("ROUND DRAW!");
         }
         else{
-            System.out.println(winnerTeam + " WINS!");
+            System.out.println(winnerTeam + " WIN!");
         }
     }
 }
