@@ -3,6 +3,7 @@ package server.store;
 import server.MatchmakingQueue;
 import server.Server;
 import server.concurrent.ConcurrentHashMap;
+import server.concurrent.Database;
 import server.game.User;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ public class Store {
     private int teamSize;
     private Logger logger;
     private ConcurrentHashMap<String, User> users;
+    private Database database;
 
     /**
      * Initiates the store and associated data structures.
@@ -58,6 +60,7 @@ public class Store {
         users = new ConcurrentHashMap<>();
 
         setMatchmakingScheduler();
+        database = new Database();
     }
 
     /**
@@ -91,6 +94,10 @@ public class Store {
         User user = users.get(token);
         if (user == null) return null;
         return user;
+    }
+
+    public Database getDatabase() {
+        return database;
     }
 
     /**

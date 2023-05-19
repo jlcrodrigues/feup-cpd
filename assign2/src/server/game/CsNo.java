@@ -321,20 +321,24 @@ public class CsNo extends Game {
     }
 
     private void updateElo(String winner) {
+        Map<String, Integer> elo = new HashMap<>();
         if (!isRanked) return;
         int average1 = (int) team1.stream().mapToInt(User::getElo)
                 .average().orElse(0);
         int average2 = (int) team2.stream().mapToInt(User::getElo)
                 .average().orElse(0);
         double result = (winner.equals("TERRORISTS") ? 1 : (winner.equals("COUNTER-TERRORISTS") ? 0 : 0.5));
-        updateTeamElo(team1, average2, result);
-        updateTeamElo(team2, average1, 1 - result);
+        updateTeamElo(elo, team1, average2, result);
+        updateTeamElo(elo, team2, average1, 1 - result);
+        Store.getStore().getDatabase().updateElo(elo);
     }
 
-    private void updateTeamElo(List<User> team, int opponentAverage, double result) {
+    private void updateTeamElo(Map<String, Integer> elo, List<User> team, int opponentAverage, double result) {
         for (User user : team) {
             double winProbability =  1.0  / (1 + Math.pow(10, (double) (opponentAverage - user.getElo()) / 400));
-            user.setElo((int) (user.getElo() + 32 * (result - winProbability)));
+            int newElo = (int) (user.getElo() + 32 * (result - winProbability));
+            user.setElo(newElo);
+            elo.put(user.getUsername(), newElo);
         }
     }
 }

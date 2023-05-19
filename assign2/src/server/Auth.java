@@ -1,15 +1,16 @@
 package server;
 
+import server.concurrent.Database;
 import server.game.User;
 import server.store.SocketWrapper;
 import server.store.Store;
+import server.utils.Utils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -17,7 +18,6 @@ import java.util.logging.Level;
  * Defines functions within the authentication task.
  */
 public class Auth extends ConnectionHandler {
-    private final String fileName = "src/server/users.txt";
 
     public Auth(SocketWrapper socket) {
         this.socket = socket;
@@ -32,19 +32,17 @@ public class Auth extends ConnectionHandler {
         switch (method) {
             case "login":
                 login();
-                Store.getStore().registerIdleSocket(socket);
                 break;
             case "register":
                 register();
-                Store.getStore().registerIdleSocket(socket);
                 break;
             case "logout":
                 logout();
-                Store.getStore().registerIdleSocket(socket);
                 break;
             default:
                 socket.writeLine("1 Invalid command");
         }
+        Store.getStore().registerIdleSocket(socket);
     }
 
     public void login() {
@@ -80,24 +78,14 @@ public class Auth extends ConnectionHandler {
 
         if (!validInput(args)) return;
 
-        if (getUserInfo(args.get("username").toString()) != null) {
+        Database db = Store.getStore().getDatabase();
+        if (db.getUserInfo(args.get("username").toString()) != null) {
             socket.writeLine("1 Username already in use.");
             return;
         }
 
         try {
-            FileWriter fileWriter = new FileWriter(fileName, true);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedHash = digest.digest(
-                    (args.get("password").toString()).getBytes(StandardCharsets.UTF_8));
-
-            bufferedWriter.newLine();
-            bufferedWriter.write(args.get("username") + "," + bytesToHex(encodedHash) + ",1000");
-
-            bufferedWriter.close();
-            fileWriter.close();
+            db.registerUser(args);
         } catch (IOException e) {
             socket.writeLine("1 An error occurred");
         } catch (NoSuchAlgorithmException e) {
@@ -124,7 +112,7 @@ public class Auth extends ConnectionHandler {
      * @return User object if the credentials are correct and null otherwise.
      */
     private User checkUser(String username, String password)  {
-        String[] info = getUserInfo(username);
+        String[] info = Store.getStore().getDatabase().getUserInfo(username);
         if (info == null) {
             return null;
         }
@@ -137,38 +125,12 @@ public class Auth extends ConnectionHandler {
         }
         byte[] encodedHash = digest.digest(
                 password.getBytes(StandardCharsets.UTF_8));
-        if (!userPassword.equals(bytesToHex(encodedHash))) {
+        if (!userPassword.equals(Utils.bytesToHex(encodedHash))) {
             return null;
         }
         return new User(socket, username, Integer.parseInt(info[1]));
     }
 
-    /**
-     * Retrieve the hashed user password and elo from storage.
-     * @param username Username to search for.
-     * @return List with user password hashed with sha-256 and elo or null if the user does not exist.
-     */
-    private String[] getUserInfo(String username) {
-        File file = new File(fileName);
-
-        try {
-            Scanner scanner = new Scanner(file);
-
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                String[] fields = line.split(",");
-
-                if (fields[0].equals(username)) {
-                    return new String[]{fields[1], fields[2]};
-                }
-            }
-
-            scanner.close();
-        } catch (FileNotFoundException e) {
-            Store.getStore().log(Level.SEVERE, "File not found: " + fileName);
-        }
-        return null;
-    }
 
     private Boolean validInput(Map<String, Object> args) {
         if (args.get("username") == null || args.get("username").equals("")) {
@@ -182,15 +144,4 @@ public class Auth extends ConnectionHandler {
         return true;
     }
 
-    private static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (int i = 0; i < hash.length; i++) {
-            String hex = Integer.toHexString(0xff & hash[i]);
-            if(hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
 }
