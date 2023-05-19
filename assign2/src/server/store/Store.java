@@ -26,27 +26,24 @@ import java.util.logging.Logger;
  */
 public class Store {
     private static Store instance;
-    private ExecutorService threadPool;
-    private Selector selector;
-    private int port;
-    private int teamSize;
+    private final ExecutorService threadPool;
+    private final Selector selector;
+    private final Properties properties;
     private Logger logger;
-    private ConcurrentHashMap<String, User> users;
-    private Database database;
+    private final ConcurrentHashMap<String, User> users;
+    private final Database database;
 
     /**
      * Initiates the store and associated data structures.
      */
     private Store() {
-        Properties properties = new Properties();
+        properties = new Properties();
         try (InputStream is = Server.class.getResourceAsStream("application.properties")) {
             properties.load(is);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        port = Integer.parseInt(properties.getProperty("port"));
-        teamSize = Integer.parseInt(properties.getProperty("teamSize"));
         int numThreads = Runtime.getRuntime().availableProcessors(); // use one thread per CPU core
         threadPool = Executors.newFixedThreadPool(numThreads);
 
@@ -74,12 +71,8 @@ public class Store {
         return instance;
     }
 
-    public int getPort() {
-        return port;
-    }
-
-    public int getTeamSize() {
-        return teamSize;
+    public int getProperty(String key) {
+        return Integer.parseInt(properties.getProperty(key));
     }
 
     /**
@@ -160,13 +153,13 @@ public class Store {
     }
 
     /**
-     * Run ranked matchmaking every 5 seconds.
+     * Run ranked matchmaking every x seconds.
      * Because matchmaking will vary through time, it has to run periodically and not only when new players join.
      */
     private void setMatchmakingScheduler() {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         scheduler.scheduleAtFixedRate(() -> threadPool.execute(
-                () -> MatchmakingQueue.getQueue().matchRanked()), 0, 5, TimeUnit.SECONDS);
+                () -> MatchmakingQueue.getQueue().matchRanked()), 0, getProperty("queueRefresh"), TimeUnit.SECONDS);
     }
 }

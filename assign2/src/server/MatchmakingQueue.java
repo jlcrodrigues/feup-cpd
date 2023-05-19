@@ -34,7 +34,7 @@ public class MatchmakingQueue {
     public void addCasualPlayer(User user) {
         user.setState("queue");
         casualQueue.addLast(user);
-        if (casualQueue.size() == Store.getStore().getTeamSize() * 2) {
+        if (casualQueue.size() == Store.getStore().getProperty("teamSize") * 2) {
             startGame();
         }
     }
@@ -57,7 +57,7 @@ public class MatchmakingQueue {
      * Then, it will group players into games based on their eligibility to play (elo and time spent waiting).
      */
     public synchronized void matchRanked() {
-        int teamSize = Store.getStore().getTeamSize();
+        int teamSize = Store.getStore().getProperty("teamSize");
         if (rankedQueue.size() < teamSize) return;
 
         Queue<User> temp = new LinkedList<>(rankedQueue.getQueue());
@@ -97,7 +97,7 @@ public class MatchmakingQueue {
      * Create a new game task. Removes users from queue.
      */
     private synchronized void startGame() {
-        if (casualQueue.size() < Store.getStore().getTeamSize() * 2) return;
+        if (casualQueue.size() < Store.getStore().getProperty("teamSize") * 2) return;
         ArrayList<User> players = new ArrayList<>(casualQueue.getQueue());
         Game game = new CsNo(players, false);
         for (User player : players) {
@@ -116,7 +116,7 @@ public class MatchmakingQueue {
     private void startRankedGames(ArrayList<ArrayList<User>> gamePlayers) {
         ArrayList<Game> games = new ArrayList<>();
         for (ArrayList<User> game : gamePlayers) {
-            if (game.size() < Store.getStore().getTeamSize() * 2) continue;
+            if (game.size() < Store.getStore().getProperty("teamSize") * 2) continue;
             Game g = new CsNo(game, true);
             for (User user : game) {
                 user.setState("game");

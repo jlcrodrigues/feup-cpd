@@ -13,11 +13,12 @@ import java.util.stream.Collectors;
 public class Session {
     private static Session instance;
     private Socket socket;
+    private final Properties properties;
     private Map<String, Object> profile;
     private Scanner scanner;
 
     private Session() {
-        Properties properties = new Properties();
+        properties = new Properties();
         try (InputStream is = Client.class.getResourceAsStream("application.properties")) {
             properties.load(is);
         } catch (IOException e) {
@@ -52,6 +53,10 @@ public class Session {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public int getProperty(String key) {
+        return Integer.parseInt(properties.getProperty(key));
     }
 
     public boolean isLoggedIn() {

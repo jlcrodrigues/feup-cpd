@@ -12,9 +12,6 @@ import java.util.logging.Level;
  * In the end, the teams that guesses most spots wins.
  */
 public class CsNo extends Game {
-    private List<User> team1;
-    private List<User> team2;
-
     private final int nrOfSpots;
 
     private List<List<String>> spotsTeam1;
@@ -28,7 +25,10 @@ public class CsNo extends Game {
 
         nrOfSpots = users.size() / 2 + 2;
 
-        initTeams();
+        shots = new HashMap<>();
+        input = new HashMap<>();
+        spotsTeam1 = new ArrayList<>();
+        spotsTeam2 = new ArrayList<>();
 
         initSpots(spotsTeam1, users.size() / 2);
         initSpots(spotsTeam2, users.size() / 2);
@@ -48,31 +48,12 @@ public class CsNo extends Game {
         processGame();
         String winner = checkWinner();
 
-        updateElo(winner);
+        updateElo(winner.equals("TERRORISTS") ? 1 : (winner.equals("COUNTER-TERRORISTS") ? 2 : 0));
 
         // send the game info to each user to be displayed there
         sendGameInfo(winner);
 
         finish();
-    }
-
-    /**
-     * Divide players into approximately equal teams using a simple greedy approach.
-     */
-    private void initTeams() {
-        users.sort(Comparator.comparingInt(User::getElo));
-        team1 = new ArrayList<>();
-        team2 = new ArrayList<>();
-        for (int i = 0; i < users.size(); i += 2) {
-            team1.add(users.get(i));
-            team2.add(users.get(i + 1));
-        }
-
-        shots = new HashMap<>();
-        input = new HashMap<>();
-        spotsTeam1 = new ArrayList<>();
-        spotsTeam2 = new ArrayList<>();
-
     }
 
     /**
@@ -84,29 +65,6 @@ public class CsNo extends Game {
         for (User user : users) {
             user.writeLine(teams);
         }
-    }
-
-    /**
-     * Send teams list to a certain player.
-     *
-     * @param user User to send the teams to
-     */
-    public void sendTeams(User user) {
-        String teams = mapTeams();
-        user.writeLine(teams);
-    }
-
-    private String mapTeams() {
-        Map<String, Object> team1Map = new HashMap<>();
-        Map<String, Object> team2Map = new HashMap<>();
-        for (User user : team1) {
-            team1Map.put(user.getUsername(), user.getElo());
-        }
-
-        for (User user : team2) {
-            team2Map.put(user.getUsername(), user.getElo());
-        }
-        return mapToJsonString(team1Map) + ";" + mapToJsonString(team2Map);
     }
 
     private void sendGameInfo(String winner) {
@@ -283,8 +241,9 @@ public class CsNo extends Game {
         return spotsTeam1;
     }
 
-
-    // check who has less dead spots
+    /**
+     * Check which team has fewer deaths.
+     */
     private String checkWinner() {
         int team1Dead = teamNrOfDeaths(spotsTeam1);
         int team2Dead = teamNrOfDeaths(spotsTeam2);
@@ -306,7 +265,6 @@ public class CsNo extends Game {
                 deads += spotPlayers;
             }
         }
-
         return deads;
     }
 
@@ -319,28 +277,4 @@ public class CsNo extends Game {
             spots.add(spot);
         }
     }
-
-    private void updateElo(String winner) {
-        Map<String, Integer> elo = new HashMap<>();
-        if (!isRanked) return;
-        int average1 = (int) team1.stream().mapToInt(User::getElo)
-                .average().orElse(0);
-        int average2 = (int) team2.stream().mapToInt(User::getElo)
-                .average().orElse(0);
-        double result = (winner.equals("TERRORISTS") ? 1 : (winner.equals("COUNTER-TERRORISTS") ? 0 : 0.5));
-        updateTeamElo(elo, team1, average2, result);
-        updateTeamElo(elo, team2, average1, 1 - result);
-        Store.getStore().getDatabase().updateElo(elo);
-    }
-
-    private void updateTeamElo(Map<String, Integer> elo, List<User> team, int opponentAverage, double result) {
-        for (User user : team) {
-            double winProbability =  1.0  / (1 + Math.pow(10, (double) (opponentAverage - user.getElo()) / 400));
-            int newElo = (int) (user.getElo() + 32 * (result - winProbability));
-            user.setElo(newElo);
-            elo.put(user.getUsername(), newElo);
-        }
-    }
 }
-
-

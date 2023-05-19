@@ -1,7 +1,6 @@
 package client.states;
 
 import client.Session;
-import server.store.Store;
 
 import java.util.*;
 
@@ -77,7 +76,7 @@ public class GameState implements State {
 
     private String getInput(String message) {
         Session session = Session.getSession();
-        int nrSpots = Store.getStore().getTeamSize() + 2;
+        int nrSpots = Session.getSession().getProperty("teamSize") + 2;
 
         System.out.println(message + " (1-" + nrSpots + ")");
         String input = session.getScanner().nextLine();

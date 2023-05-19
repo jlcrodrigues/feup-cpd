@@ -54,10 +54,10 @@ public class Server {
     private static void registerServerSocketChannel() throws IOException {
         Store store = Store.getStore();
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.socket().bind(new InetSocketAddress(store.getPort()));
+        serverSocketChannel.socket().bind(new InetSocketAddress(store.getProperty("port")));
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.register(store.getSelector(), SelectionKey.OP_ACCEPT);
-        store.log(Level.INFO, "Server is listening on port " + store.getPort());
+        store.log(Level.INFO, "Server is listening on port " + store.getProperty("port"));
     }
 }
 
