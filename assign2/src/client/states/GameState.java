@@ -25,26 +25,69 @@ public class GameState implements State {
         Session session = Session.getSession();
 
         // display the teams and each player elo
-        String teams = session.readLine();
+        String teams = session.readSocketLine();
         createTeams(teams);
         breakLn();
         System.out.println("Game started\n");
         printTeams();
 
         // get the input from the user
-        String spot = getInput("Choose a spot to camp");
-        String shot = getInput("Choose a spot to shoot");
-        System.out.println("Waiting for other players to make their actions");
+        String spot = getChoice("Choose a spot to camp");
+        String shot = null;
+        if (spot != null) {
+            shot = getChoice("Choose a spot to shoot");
+            if (shot != null) {
+                System.out.println("Waiting for other players to make their actions");
 
-        // send the input to the server
-        Map<String,Object> args = new HashMap<>();
-        args.put("spot",spot);
-        args.put("shot",shot);
-        session.writeMessage("game","choice",args);
-        session.readResponse();
+                // send the input to the server
+                Map<String,Object> args = new HashMap<>();
+                args.put("spot",spot);
+                args.put("shot",shot);
+                session.writeMessage("game","choice",args);
+                session.readResponse();
+            }
+        }
+        if (spot == null || shot == null)  {
+            System.out.println("You took to long to make a choice.");
+            System.out.println("Press enter to continue");
+            session.readInputLine();
+        }
 
+        displayGameOver();
+        return new LobbyState();
+    }
+
+    private String getChoice(String message) {
+        int nrSpots = Session.getSession().getProperty("teamSize") + 2;
+
+        System.out.println(message + " (1-" + nrSpots + ")");
+
+        String input = getChoiceInput();
+        while (input != null && !(input.matches("[1-" + nrSpots + "]"))) {
+            System.out.println("Invalid input.\n" + message + " (1-" + nrSpots + ")");
+            input = getChoiceInput();
+        }
+
+        return input;
+    }
+
+    private String getChoiceInput() {
+        Session session = Session.getSession();
+        while (!session.hasInput()) {
+            if (session.serverReady()) {
+                String[] response = session.readResponse();
+                if (response[0].equals("1")) {
+                    return null;
+                }
+            }
+        }
+        return session.readInputLine();
+    }
+
+    void displayGameOver() {
+        Session session = Session.getSession();
         // get the round info from the server
-        String round = session.readLine();
+        String round = session.readSocketLine();
         breakLn();
 
         // display the starting positions
@@ -63,30 +106,16 @@ public class GameState implements State {
         displayWinner(round);
 
         System.out.println("Press enter to continue");
-        session.getScanner().nextLine();
+        session.readInputLine();
+
+        breakLn();
 
         String[] t = round.split(";");
         createTeams(t[4] + ";" + t[5]);
         printTeams();
 
         System.out.println("Press enter to continue");
-        session.getScanner().nextLine();
-        return new LobbyState();
-    }
-
-    private String getInput(String message) {
-        Session session = Session.getSession();
-        int nrSpots = Session.getSession().getProperty("teamSize") + 2;
-
-        System.out.println(message + " (1-" + nrSpots + ")");
-        String input = session.getScanner().nextLine();
-
-        while (!(input.matches("[1-" + nrSpots + "]"))) {
-            System.out.println("Invalid input.\n" + message + " (1-" + nrSpots + ")");
-            input = session.getScanner().nextLine();
-        }
-
-        return input;
+        session.readInputLine();
     }
 
     private void createTeams (String teams) {

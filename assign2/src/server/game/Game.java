@@ -7,6 +7,7 @@ import java.util.*;
 
 public abstract class Game extends ConnectionHandler {
     protected List<User> users;
+    protected Set<User> disconnected;
     protected boolean isRanked;
 
     protected List<User> team1;
@@ -83,6 +84,9 @@ public abstract class Game extends ConnectionHandler {
 
     private void updateTeamElo(Map<String, Integer> elo, List<User> team, int opponentAverage, double result) {
         for (User user : team) {
+            // disconnected players cannot gain elo
+            if (disconnected.contains(user) && result >= 0.5) continue;
+
             double winProbability =  1.0  / (1 + Math.pow(10, (double) (opponentAverage - user.getElo()) / 400));
             int k = Store.getStore().getProperty("eloFactor");
             int newElo = (int) (user.getElo() + k * (result - winProbability));

@@ -42,7 +42,7 @@ public class CsNo extends Game {
         sendTeams();
 
         // process input from every user
-        readFromUsers();
+        disconnected = readFromUsers();
 
         // play the game and check the winner
         processGame();
@@ -90,14 +90,24 @@ public class CsNo extends Game {
 
     /**
      * Read input from every user. <br>
+     * Returns a set of users that did not send input in time.
      */
-    private void readFromUsers() {
+    private Set<User> readFromUsers() {
         Set<User> userSet = new HashSet<>();
         userSet.addAll(team1);
         userSet.addAll(team2);
+        // count time
+        long startTime = System.currentTimeMillis();
+        int maxTime = Store.getStore().getProperty("playerTimeout") * 1000;
 
         // users can change sockets mid-game
         while (userSet.size() > 0) {
+            if (System.currentTimeMillis() - startTime > maxTime) {
+                for (User user : userSet) {
+                    user.writeLine("1 Time limit exceeded");
+                }
+                return userSet;
+            }
             for (User user : userSet) {
                 if (user.getSocket().hasInput()) {
                     readFromUser(user);
@@ -106,6 +116,7 @@ public class CsNo extends Game {
                 }
             }
         }
+        return userSet;
     }
 
     /**

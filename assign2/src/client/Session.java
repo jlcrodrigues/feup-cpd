@@ -15,7 +15,7 @@ public class Session {
     private Socket socket;
     private final Properties properties;
     private Map<String, Object> profile;
-    private Scanner scanner;
+    private BufferedReader reader;
 
     private Session() {
         properties = new Properties();
@@ -36,7 +36,7 @@ public class Session {
             System.out.println("I/O error: " + ex.getMessage());
         }
 
-        scanner = new Scanner(System.in);
+        reader = new BufferedReader(new InputStreamReader(System.in));
     }
 
     public static Session getSession() {
@@ -47,8 +47,8 @@ public class Session {
     }
 
     public void close() {
-        scanner.close();
         try {
+            reader.close();
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -91,6 +91,17 @@ public class Session {
         this.socket = socket;
     }
 
+    public boolean serverReady() {
+        InputStream input = null;
+        try {
+            input = socket.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+            return reader.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public String getProfileInfo(String field) {
         return profile.get(field).toString();
     }
@@ -124,12 +135,20 @@ public class Session {
         }
     }
 
-    /**
-     * Get the scanner used to read user input.
-     * This is used to avoid creating multiple scanners.
-     */
-    public Scanner getScanner() {
-        return scanner;
+    public boolean hasInput() {
+        try {
+            return reader.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String readInputLine() {
+        try {
+            return reader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -151,7 +170,7 @@ public class Session {
      * Utility function to read a line from the server.
      * @return String with the line read.
      */
-    public String readLine() {
+    public String readSocketLine() {
         try {
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));

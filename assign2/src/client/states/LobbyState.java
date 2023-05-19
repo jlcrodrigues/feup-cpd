@@ -3,7 +3,6 @@ package client.states;
 import client.Session;
 
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * This class represents the lobby state of the client.
@@ -21,12 +20,11 @@ public class LobbyState implements State {
         System.out.println("\t4) Log out");
         System.out.println("\t0) Exit");
 
-        Scanner scanner = Session.getSession().getScanner();
-
-        String option = scanner.nextLine();
+        Session session = Session.getSession();
+        String option = session.readInputLine();
         while (!(option.matches("[0-4]"))) {
             System.out.println("Invalid option");
-            option = scanner.nextLine();
+            option = session.readInputLine();
         }
 
         switch (option) {
@@ -77,12 +75,11 @@ public class LobbyState implements State {
         System.out.println("\t1) Back");
         System.out.println("\t0) Exit");
 
-        Scanner scanner = session.getScanner();
 
-        String option = scanner.nextLine();
+        String option = session.readInputLine();
         while (!(option.matches("[0-1]"))) {
             System.out.println("Invalid option");
-            option = scanner.nextLine();
+            option = session.readInputLine();
         }
 
         if (option.equals("1")) {

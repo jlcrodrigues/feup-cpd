@@ -72,7 +72,13 @@ public class Store {
     }
 
     public int getProperty(String key) {
-        return Integer.parseInt(properties.getProperty(key));
+        try {
+            return Integer.parseInt(properties.getProperty(key));
+        }
+        catch (NumberFormatException e) {
+            Store.getStore().log(Level.SEVERE, "Invalid property: " + key);
+            return 0;
+        }
     }
 
     /**

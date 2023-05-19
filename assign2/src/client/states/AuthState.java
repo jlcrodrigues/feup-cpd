@@ -4,7 +4,6 @@ import client.Session;
 
 import java.io.Console;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * Default entry point of the program. Allows user to authenticate.
@@ -22,7 +21,7 @@ public class AuthState implements State {
             System.out.println("\t\t2) Register");
             System.out.println("\t\t0) Exit");
 
-            option = Session.getSession().getScanner().nextLine();
+            option = Session.getSession().readInputLine();
 
             if (option.equals("1")) status = login();
             if (option.equals("2")) register();
@@ -60,21 +59,20 @@ public class AuthState implements State {
     }
 
     private String[] sendAuthRequest(String method) {
-        Scanner scanner = Session.getSession().getScanner();
+        Session session = Session.getSession();
         System.out.print("Username: ");
-        String username = scanner.nextLine();
+        String username = session.readInputLine();
 
         String password;
         Console console = System.console();
         if (console == null) {
             System.out.print("Password: ");
-            password = scanner.nextLine();
+            password = session.readInputLine();
         } else {
             char[] passwordArray = console.readPassword("Password: ");
             password = new String(passwordArray);
         }
 
-        Session session = Session.getSession();
         session.writeMessage("auth",
                 method,
                 Map.of("username", username, "password", password));
