@@ -49,6 +49,16 @@ public class User {
         }
     }
 
+    public SocketWrapper getSocket() {
+        socketLock.lock();
+        try {
+            return socket;
+        }
+        finally {
+            socketLock.unlock();
+        }
+    }
+
     public void setSocket(SocketWrapper socket) {
         socketLock.lock();
         try {

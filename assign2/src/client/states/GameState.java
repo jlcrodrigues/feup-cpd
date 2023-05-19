@@ -41,6 +41,7 @@ public class GameState implements State {
 
                 // send the input to the server
                 Map<String,Object> args = new HashMap<>();
+                args.put("token",session.getProfileInfo("token"));
                 args.put("spot",spot);
                 args.put("shot",shot);
                 session.writeMessage("game","choice",args);

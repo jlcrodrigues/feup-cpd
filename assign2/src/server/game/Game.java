@@ -3,10 +3,15 @@ package server.game;
 import server.ConnectionHandler;
 import server.store.Store;
 
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.*;
 
 public abstract class Game extends ConnectionHandler {
     protected List<User> users;
+    protected Selector selector;
     protected Set<User> disconnected;
     protected boolean isRanked;
 
@@ -16,6 +21,11 @@ public abstract class Game extends ConnectionHandler {
     public Game(List<User> users, boolean isRanked) {
         this.users = users;
         this.isRanked = isRanked;
+        try {
+            this.selector = Selector.open();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         initTeams();
     }
@@ -49,6 +59,17 @@ public abstract class Game extends ConnectionHandler {
     public void sendTeams(User user) {
         String teams = mapTeams();
         user.writeLine(teams);
+    }
+
+    public void rejoin(User user) {
+        SocketChannel channel = user.getSocket().getSocket().getChannel();
+        try {
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            selector.wakeup();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected String mapTeams() {
@@ -93,5 +114,23 @@ public abstract class Game extends ConnectionHandler {
             user.setElo(newElo);
             elo.put(user.getUsername(), newElo);
         }
+    }
+
+    protected void startSelector() throws IOException {
+        for (User user : users) {
+            SocketChannel channel = user.getSocket().getSocket().getChannel();
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+        }
+    }
+
+    protected void closeSelector() throws IOException {
+        for (SelectionKey key : selector.keys()) {
+            SocketChannel socketChannel = (SocketChannel) key.channel();
+            key.cancel();
+            socketChannel.configureBlocking(true);
+        }
+        selector.selectedKeys().clear();
+        selector.close();
     }
 }

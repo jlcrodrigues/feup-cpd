@@ -1,8 +1,11 @@
 package server.game;
 
-
+import server.store.SocketWrapper;
 import server.store.Store;
 
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -42,7 +45,11 @@ public class CsNo extends Game {
         sendTeams();
 
         // process input from every user
-        disconnected = readFromUsers();
+        try {
+            disconnected = readFromUsers();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // play the game and check the winner
         processGame();
@@ -90,31 +97,46 @@ public class CsNo extends Game {
 
     /**
      * Read input from every user. <br>
-     * Returns a set of users that did not send input in time.
+     * Returns a set of users that did not send input in time. <br>
+     * Uses a selector so users can reconnect from a different socket while avoiding busy waiting.
      */
-    private Set<User> readFromUsers() {
+    private Set<User> readFromUsers() throws IOException {
         Set<User> userSet = new HashSet<>();
         userSet.addAll(team1);
         userSet.addAll(team2);
+
+        startSelector();
+
         // count time
         long startTime = System.currentTimeMillis();
         int maxTime = Store.getStore().getProperty("playerTimeout") * 1000;
 
-        // users can change sockets mid-game
-        while (userSet.size() > 0) {
-            if (System.currentTimeMillis() - startTime > maxTime) {
-                for (User user : userSet) {
-                    user.writeLine("1 Time limit exceeded");
-                }
-                return userSet;
+        while (true) {
+            if (userSet.isEmpty()) break;
+            int readyChannels = selector.select(maxTime - (System.currentTimeMillis() - startTime));
+            if (readyChannels == 0 && System.currentTimeMillis() - startTime >= maxTime) {
+                break;
+            } else if (readyChannels == 0) {
+                continue;
             }
-            for (User user : userSet) {
-                if (user.hasInput()) {
-                    readFromUser(user);
-                    userSet.remove(user);
-                    break;
+
+            Set<SelectionKey> selectedKeys = selector.selectedKeys();
+            Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
+            while (keyIterator.hasNext()) {
+                SelectionKey key = keyIterator.next();
+                if (key.isReadable()) {
+                    SocketChannel socketChannel = (SocketChannel) key.channel();
+                    SocketWrapper socket = new SocketWrapper(socketChannel.socket());
+                    key.cancel();
+                    socketChannel.configureBlocking(true);
+                    userSet.remove(readFromUser(socket));
                 }
+                keyIterator.remove();
             }
+        }
+        closeSelector();
+        for (User user : userSet) {
+            user.writeLine("1 Time limit exceeded");
         }
         return userSet;
     }
@@ -122,28 +144,29 @@ public class CsNo extends Game {
     /**
      * Read a user's choices.
      */
-    private void readFromUser(User user) {
-        String module = user.readLine().toLowerCase();
+    private User readFromUser(SocketWrapper socket) {
+        String module = socket.readLine().toLowerCase();
         if (module.equals("game")) {
-            String type = user.readLine().toLowerCase();
+            String type = socket.readLine().toLowerCase();
             if (type.equals("choice")) {
-                getInput(user);
-                return;
+                return getInput(socket);
             }
         }
-        user.writeLine("1 Invalid command");
+        socket.writeLine("1 Invalid command");
+        return null;
     }
 
-    private void getInput(User user) {
-        String argsString = user.readLine();
+    private User getInput(SocketWrapper socket) {
+        String argsString = socket.readLine();
         Map<String, Object> args = jsonStringToMap(argsString);
 
         // check if the arguments are valid
-        if (!args.containsKey("spot") || !args.containsKey("shot")) {
-            user.writeLine("1 Invalid arguments");
-            return;
+        if (!args.containsKey("token") || !args.containsKey("spot") || !args.containsKey("shot")) {
+            socket.writeLine("1 Invalid arguments");
+            return null;
         }
 
+        User user = Store.getStore().getUser(args.get("token").toString());
         int spot = Integer.parseInt(args.get("spot").toString());
         int shot = Integer.parseInt(args.get("shot").toString());
 
@@ -155,6 +178,7 @@ public class CsNo extends Game {
 
         // send the confirmation to the user
         user.writeLine("0");
+        return user;
     }
 
     private void processGame() {

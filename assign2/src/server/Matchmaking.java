@@ -49,6 +49,7 @@ public class Matchmaking extends ConnectionHandler {
         socket.writeLine("0 " + mapToJsonString(user.toMap()));
         if (user.getState().equals("game")) {
             user.getActiveGame().sendTeams(user);
+            user.getActiveGame().rejoin(user);
         }
         if (user.getState() == null || user.getState().equals("none"))
             Store.getStore().registerIdleSocket(socket);
