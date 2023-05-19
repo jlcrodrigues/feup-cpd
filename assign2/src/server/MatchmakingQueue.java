@@ -1,6 +1,6 @@
 package server;
 
-import server.concurrent.ConcurrentArrayDeque;
+import server.concurrent.MyConcurrentArrayDeque;
 import server.game.CsNo;
 import server.game.Game;
 import server.game.User;
@@ -8,36 +8,85 @@ import server.store.Store;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Defines matchmaking logic. This class is a singleton that contains the current pool of queued players.
  */
 public class MatchmakingQueue {
     private static MatchmakingQueue instance;
-    private ConcurrentArrayDeque<User> casualQueue; // casual collection behaves as a list
-    private ConcurrentArrayDeque<User> rankedQueue; // ranked collection behaves as a queue
-    private Map<String, Date> rankedQueueTimes;
+    private final MyConcurrentArrayDeque<User> casualQueue; // casual collection behaves as a list
+    private final MyConcurrentArrayDeque<User> rankedQueue; // ranked collection behaves as a queue
+    private final ReentrantLock casualQueueLock;
+    private final ReentrantLock rankedQueueLock;
+    private final Map<String, Date> rankedQueueTimes;
 
-    private final int timeFactor = 8; // elo time relaxation factor
-    private final int timeBaseline = 100; // minimum elo distance
+    private final int timeFactor;
+    private final int timeBaseline;
 
     public MatchmakingQueue() {
-        casualQueue = new ConcurrentArrayDeque<>();
-        rankedQueue = new ConcurrentArrayDeque<>();
+        casualQueue = new MyConcurrentArrayDeque<>();
+        rankedQueue = new MyConcurrentArrayDeque<>();
+        casualQueueLock = new ReentrantLock();
+        rankedQueueLock = new ReentrantLock();
         rankedQueueTimes = new ConcurrentHashMap<>();
+
+        Store store = Store.getStore();
+        timeFactor = store.getProperty("timeFactor");
+        timeBaseline = store.getProperty("timeBaseline");
     }
+
+    /**
+     * Get the matchmaking instance. If it does not exist yet, one will be created.
+     * @return Matchmaking instance.
+     */
+    public static MatchmakingQueue getQueue() {
+        if (instance == null) {
+            synchronized (MatchmakingQueue.class) {
+                if (instance == null)
+                    instance = new MatchmakingQueue();
+            }
+        }
+        return instance;
+    }
+
+    /////// casual games ///////
 
     /**
      * Add a player to queue. If the stopping criteria is met, the game will be started.
      * @param user
      */
     public void addCasualPlayer(User user) {
-        user.setState("queue");
-        casualQueue.addLast(user);
-        if (casualQueue.size() == Store.getStore().getProperty("teamSize") * 2) {
-            startGame();
+        casualQueueLock.lock();
+        try {
+            user.setState("queue");
+            casualQueue.addLast(user);
+            if (casualQueue.size() == Store.getStore().getProperty("teamSize") * 2) {
+                startGame();
+            }
+        }
+        finally {
+            casualQueueLock.unlock();
         }
     }
+
+    /**
+     * Create a new game task. Removes users from queue.
+     */
+    private void startGame() {
+        if (casualQueue.size() < Store.getStore().getProperty("teamSize") * 2) return;
+        ArrayList<User> players = new ArrayList<>(casualQueue.getQueue());
+        Game game = new CsNo(players, false);
+        for (User player : players) {
+            player.setState("game");
+            player.setActiveGame(game);
+        }
+        casualQueue.clear();
+        Store store = Store.getStore();
+        store.execute(game);
+    }
+
+    /////// ranked games ///////
 
     /**
      * Add a player to the ranked queue.
@@ -45,10 +94,26 @@ public class MatchmakingQueue {
      * @param user User to add to queue.
      */
     public void addRankedPlayer(User user) {
-        user.setState("queue");
-        rankedQueue.addLast(user);
-        rankedQueueTimes.put(user.getUsername(), new Date());
-        matchRanked();
+        rankedQueueLock.lock();
+        try {
+            user.setState("queue");
+            rankedQueue.addLast(user);
+            rankedQueueTimes.put(user.getUsername(), new Date());
+            matchRankedUnsafe();
+        }
+        finally {
+            rankedQueueLock.unlock();
+        }
+    }
+
+    public void matchRanked() {
+        rankedQueueLock.lock();
+        try {
+            matchRankedUnsafe();
+        }
+        finally {
+            rankedQueueLock.unlock();
+        }
     }
 
     /**
@@ -56,7 +121,7 @@ public class MatchmakingQueue {
      * This is done by iterating a queue of players (this gives priority to players who have been waiting the longest).
      * Then, it will group players into games based on their eligibility to play (elo and time spent waiting).
      */
-    public synchronized void matchRanked() {
+    public void matchRankedUnsafe() {
         int teamSize = Store.getStore().getProperty("teamSize");
         if (rankedQueue.size() < teamSize) return;
 
@@ -82,32 +147,6 @@ public class MatchmakingQueue {
         startRankedGames(games);
     }
 
-    /**
-     * Get the matchmaking instance. If it does not exist yet, one will be created.
-     * @return Matchmaking instance.
-     */
-    public synchronized static MatchmakingQueue getQueue() {
-        if (instance == null) {
-            instance = new MatchmakingQueue();
-        }
-        return instance;
-    }
-
-    /**
-     * Create a new game task. Removes users from queue.
-     */
-    private synchronized void startGame() {
-        if (casualQueue.size() < Store.getStore().getProperty("teamSize") * 2) return;
-        ArrayList<User> players = new ArrayList<>(casualQueue.getQueue());
-        Game game = new CsNo(players, false);
-        for (User player : players) {
-            player.setState("game");
-            player.setActiveGame(game);
-        }
-        casualQueue.clear();
-        Store store = Store.getStore();
-        store.execute(game);
-    }
 
     /**
      * After ranked matchmaking, start eligible games.

@@ -109,7 +109,7 @@ public class CsNo extends Game {
                 return userSet;
             }
             for (User user : userSet) {
-                if (user.getSocket().hasInput()) {
+                if (user.hasInput()) {
                     readFromUser(user);
                     userSet.remove(user);
                     break;

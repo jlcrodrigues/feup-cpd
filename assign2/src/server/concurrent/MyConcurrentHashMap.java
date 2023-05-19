@@ -11,11 +11,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * This can be used when thread-safety is needed.
  * It uses a ReadWriteLock with SE's HashMap.
  */
-public class ConcurrentHashMap<K, V> {
+public class MyConcurrentHashMap<K, V> {
     private final Map<K, V> map;
     private final ReadWriteLock lock;
 
-    public ConcurrentHashMap() {
+    public MyConcurrentHashMap() {
         map = new HashMap<>();
         lock = new ReentrantReadWriteLock();
     }

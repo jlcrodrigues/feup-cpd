@@ -24,7 +24,7 @@ public abstract class Game extends ConnectionHandler {
         Store store = Store.getStore();
         for (User user : users) {
             user.setState("none");
-            store.registerIdleSocket(user.getSocket());
+            user.registerAsIdle();
         }
     }
 

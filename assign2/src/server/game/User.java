@@ -1,39 +1,72 @@
 package server.game;
 
 import server.store.SocketWrapper;
+import server.store.Store;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class User {
     private SocketWrapper socket;
+    private final ReentrantLock socketLock;
     private String token;
-    private String username;
+    private final String username;
     private int elo;
     private String state;
     private Game activeGame;
 
     public User(SocketWrapper socket, String username, int elo) {
         this.socket = socket;
+        this.socketLock = new ReentrantLock();
         this.username = username;
         this.elo = elo;
+        this.state = "none";
         this.activeGame = null;
     }
 
-    public void setToken(String token) {
+    public synchronized void setToken(String token) {
         this.token = token;
     }
 
-    public SocketWrapper getSocket() {
-        return socket;
+    public boolean hasInput() {
+        socketLock.lock();
+        try {
+            return socket.hasInput();
+        }
+        finally {
+            socketLock.unlock();
+        }
+    }
+
+    public void registerAsIdle() {
+        socketLock.lock();
+        try {
+            Store.getStore().registerIdleSocket(socket);
+        }
+        finally {
+            socketLock.unlock();
+        }
     }
 
     public void setSocket(SocketWrapper socket) {
-        this.socket = socket;
+        socketLock.lock();
+        try {
+            this.socket = socket;
+        }
+        finally {
+            socketLock.unlock();
+        }
     }
 
     public String readLine() {
-        return socket.readLine();
+        socketLock.lock();
+        try {
+            return socket.readLine();
+        }
+        finally {
+            socketLock.unlock();
+        }
     }
 
     public String getToken() {

@@ -13,6 +13,7 @@ import java.util.logging.Level;
 public class Server {
 
     public static void main(String[] args) {
+        Store.init();
         Store store = Store.getStore();
 
         try {

@@ -2,7 +2,7 @@ package server.store;
 
 import server.MatchmakingQueue;
 import server.Server;
-import server.concurrent.ConcurrentHashMap;
+import server.concurrent.MyConcurrentHashMap;
 import server.concurrent.Database;
 import server.game.User;
 
@@ -30,7 +30,7 @@ public class Store {
     private final Selector selector;
     private final Properties properties;
     private Logger logger;
-    private final ConcurrentHashMap<String, User> users;
+    private final MyConcurrentHashMap<String, User> users;
     private final Database database;
 
     /**
@@ -54,19 +54,28 @@ public class Store {
         }
 
         initLogger();
-        users = new ConcurrentHashMap<>();
+        users = new MyConcurrentHashMap<>();
 
         setMatchmakingScheduler();
         database = new Database();
     }
 
     /**
-     * Get the store instance. If it does not exist yet, one will be created.
+     * Initialize the Store at the start of the program. <br>
+     * This way getStore does not need to be synchronized.
+     */
+    public static void init() {
+        if (instance != null) return;
+        instance = new Store();
+    }
+
+    /**
+     * Get the store instance.
      * @return Store instance.
      */
-    public synchronized static Store getStore() {
+    public static Store getStore() {
         if (instance == null) {
-            instance = new Store();
+            throw new RuntimeException("Store not initialized");
         }
         return instance;
     }

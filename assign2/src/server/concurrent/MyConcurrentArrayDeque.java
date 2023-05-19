@@ -7,11 +7,11 @@ import java.util.concurrent.locks.ReentrantLock;
  * This can be used when thread-safety is needed and works as a list, queue, etc.
  * It uses a ReentrantLock with SE's ArrayDeque.
  */
-public class ConcurrentArrayDeque<T> {
+public class MyConcurrentArrayDeque<T> {
     private ArrayDeque<T> deque;
     private ReentrantLock lock;
 
-    public ConcurrentArrayDeque() {
+    public MyConcurrentArrayDeque() {
         deque = new ArrayDeque<T>();
         lock = new ReentrantLock();
     }
