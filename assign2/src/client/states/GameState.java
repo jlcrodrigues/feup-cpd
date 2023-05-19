@@ -65,6 +65,13 @@ public class GameState implements State {
 
         System.out.println("Press enter to continue");
         session.getScanner().nextLine();
+
+        String[] t = round.split(";");
+        createTeams(t[4] + ";" + t[5]);
+        printTeams();
+
+        System.out.println("Press enter to continue");
+        session.getScanner().nextLine();
         return new LobbyState();
     }
 
@@ -84,6 +91,8 @@ public class GameState implements State {
     }
 
     private void createTeams (String teams) {
+        this.team1.clear();
+        this.team2.clear();
         String team1 = teams.split(";")[0];
         String team2 = teams.split(";")[1];
         createTeam(team1, this.team1);
@@ -98,6 +107,9 @@ public class GameState implements State {
             player.add(user);
             player.add(elo);
             teamList.add(player);
+            if (user.equals(Session.getSession().getProfileInfo("username"))) {
+                Session.getSession().setProfileInfo("elo", elo);
+            }
         }
     }
 
@@ -152,7 +164,7 @@ public class GameState implements State {
 
     private void printTeams () {
         int maxTeamSize = Math.max(team1.size(), team2.size());
-        int teamNameWidth = 20; // Width of team name column
+        int teamNameWidth = 30; // Width of team name column
 
         String terroristTeamName = "Terrorists";
         String counterTerroristTeamName = "Counter-Terrorists";

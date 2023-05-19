@@ -46,6 +46,7 @@ public class Session {
     }
 
     public void close() {
+        scanner.close();
         try {
             socket.close();
         } catch (IOException e) {
@@ -87,6 +88,10 @@ public class Session {
 
     public String getProfileInfo(String field) {
         return profile.get(field).toString();
+    }
+
+    public void setProfileInfo(String field, String value) {
+        profile.put(field, value);
     }
 
     public void setProfile(Map<String, Object> profile) {

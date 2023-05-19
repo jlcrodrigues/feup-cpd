@@ -52,6 +52,10 @@ public class User {
         return elo;
     }
 
+    public void setElo(int elo) {
+        this.elo = elo;
+    }
+
     public void setState(String state) {
         this.state = state;
     }
