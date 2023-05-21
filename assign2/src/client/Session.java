@@ -191,6 +191,9 @@ public class Session {
 
     public static Map<String, Object> jsonStringToMap(String jsonString) {
         Map<String, Object> map = new HashMap<>();
+        if (jsonString.equals("{}")) {
+            return map;
+        }
         jsonString = jsonString.substring(1, jsonString.length() - 1);
         String[] keyValuePairs = jsonString.split(",");
 

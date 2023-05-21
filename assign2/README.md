@@ -11,19 +11,45 @@
 
 ### Steps to run
 
-TODO
+#### Server
+
+```bash
+cd assign2/src
+javac server/*.java
+java server.Server
+```
+
+#### Client
+
+```bash
+cd assign2/src
+javac client/*.java
+java client.Client
+```
+
+If more than one client is being executed no the same machine, the flag -r can be used to create a new session:
+
+```bash
+java client.Client -r
+```
+
+To clean `.class` files:
+
+```bash
+cd assign2/src
+./clean.sh
+```
 
 ### Features
 
 - [x] Auth: User information kept in file, allowing for registering, logging in and logging out.
 - [x] Matchmaking: Casual and ranked matchmaking, queueing players.
-- [ ] Game: Players can play the game, with the server keeping track of the game state.
-- [ ] Ranking: Games will affect player rank.
-- [ ] Client fault tolerance: Client can recover from client crashes.
-- [ ] Server fault tolerance: Server can recover from server crashes.
+- [x] Game: Players can play the game, with the server keeping track of the game state.
+- [x] Ranking: Games will affect player rank.
+- [x] Client fault tolerance: Client can recover from client crashes.
 - [x] Thread safety
-- [ ] Client timeout to avoid slow clients
-- [ ] Server side logger to keep track of events
+- [x] Client timeout to avoid slow clients
+- [x] Server side logger to keep track of events
 - [x] No thread overheads: Server maintains a thread pool
 
 ### Protocol

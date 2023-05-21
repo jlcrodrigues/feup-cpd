@@ -18,7 +18,7 @@ import java.util.logging.Level;
  */
 public class Database {
     private ReentrantReadWriteLock lock;
-    private final String fileName = "src/server/users.txt";
+    private final String fileName = "server/users.txt";
 
     public Database() {
         lock = new ReentrantReadWriteLock();

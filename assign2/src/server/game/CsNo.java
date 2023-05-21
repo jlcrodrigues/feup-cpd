@@ -280,27 +280,15 @@ public class CsNo extends Game {
      * Check which team has fewer deaths.
      */
     private String checkWinner() {
-        int team1Dead = teamNrOfDeaths(spotsTeam1);
-        int team2Dead = teamNrOfDeaths(spotsTeam2);
-        if (team1Dead < team2Dead) {
+        long team1Alive = spotsTeam1.stream().filter(entry -> "alive".equals(entry.get(0))).count();
+        long team2Alive = spotsTeam2.stream().filter(entry -> "alive".equals(entry.get(0))).count();
+        if (team1Alive > team2Alive) {
             return "TERRORISTS";
-        } else if (team2Dead < team1Dead) {
+        } else if (team1Alive < team2Alive) {
             return "COUNTER-TERRORISTS";
         } else {
             return "draw";
         }
-    }
-
-    private int teamNrOfDeaths(List<List<String>> spotsTeam) {
-        int deads = 0;
-
-        for (List<String> spot : spotsTeam) {
-            if (spot.get(0).equals("dead")) {
-                int spotPlayers = getSpotNrOfPlayers(spot);
-                deads += spotPlayers;
-            }
-        }
-        return deads;
     }
 
     private void initSpots(List<List<String>> spots, int maxPerSpot) {
